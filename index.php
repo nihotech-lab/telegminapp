@@ -1,3 +1,54 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 20px; }
+        .score-box { font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #333; }
+        .tap-btn { padding: 80px; font-size: 20px; color: #fff; background-color: #3b82f6; border: none; border-radius: 50%; cursor: pointer; }
+        .tap-btn:active { background-color: #2563eb; transform: scale(0.95); }
+    </style>
+</head>
+<body>
+    <div class="score-box">Score: <span id="score">0</span></div>
+    <button class="tap-btn" id="tap-btn">TAP!</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const user = tg.initDataUnsafe.user;
+        let score = 0;
+        document.getElementById('tap-btn').addEventListener('click', () => {
+            score++;
+            document.getElementById('score').innerText = score;
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (user && score > 0) {
+                fetch('', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `submit_score=1&user_id=${user.id}&username=${user.username || 'unknown'}&score=${score}`
+                });
+            }
+        });
+    </script>
+
+    <!-- <?php
+    // if (isset($_POST['submit_score'])) {
+        // $user_id = $_POST['user_id'];
+        // $username = $_POST['username'];
+        // $score = $_POST['score'];
+        // $data = "User ID: $user_id | Username: $username | Score: $score\n";
+        // file_put_contents('scores.txt', $data, FILE_APPEND);
+        // exit; -->
+    // }
+    // ?>
+</body>
+</html> -->
+
 <?php
 // =====================================
 // DATABASE CONFIGURATION (PDO)
@@ -186,7 +237,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         .logo span {
-            color: var(--accent-gold);
+            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         nav ul {
@@ -230,9 +283,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             font-size: clamp(38px, 6vw, 62px);
             line-height: 1.1;
             margin-bottom: 20px;
-            background: linear-gradient(135deg, #fff, var(--accent-gold));
+            background: linear-gradient(135deg, #fff, var(--accent-gold), #ff6b6b, #4f46e5);
+            background-size: 300% 300%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: gradientShift 8s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         .hero-text p {
@@ -253,13 +314,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         .btn-primary {
-            background: var(--accent-gold);
+            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b);
             color: #000;
+            font-weight: 700;
         }
 
         .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.5), 0 0 20px rgba(255, 107, 107, 0.3);
         }
 
         .btn-secondary {
@@ -283,6 +345,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .section-title h2 {
             font-size: 36px;
             margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(245, 158, 11, 0.2);
+        }
+
+        .section-title p {
+            background: linear-gradient(135deg, var(--text-muted), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         /* SERVICES GRID */
@@ -308,17 +380,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .card h3 {
             font-size: 22px;
             margin-bottom: 10px;
+            color: var(--accent-gold);
+            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card p {
+            color: #b4c0db;
+            line-height: 1.8;
         }
 
         .price-badge {
             display: inline-block;
-            background: rgba(245, 158, 11, 0.15);
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(255, 107, 107, 0.2));
             color: var(--accent-gold);
-            padding: 4px 12px;
+            padding: 8px 16px;
             border-radius: 20px;
             font-size: 14px;
             font-weight: bold;
             margin-bottom: 15px;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         /* GALLERY SECTION */
@@ -392,12 +476,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         .gallery-overlay h4 {
             font-size: 20px;
-            color: #fff;
+            background: linear-gradient(135deg, #fff, var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .gallery-overlay p {
             font-size: 14px;
-            color: var(--text-muted);
+            color: #d1d5db;
+            margin-top: 5px;
         }
 
         /* LIGHTBOX POPUP MODAL */
@@ -459,11 +546,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .lightbox-meta h3 {
             font-size: 22px;
             margin-bottom: 5px;
+            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .lightbox-meta p {
-            color: var(--text-muted);
+            color: #b4c0db;
             font-size: 15px;
+            line-height: 1.6;
         }
 
         .lightbox-close {
@@ -522,6 +613,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
+            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         input, select, textarea {
@@ -537,6 +631,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         input:focus, select:focus, textarea:focus {
             border-color: var(--accent-gold);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #6b7280;
         }
 
         .alert {
