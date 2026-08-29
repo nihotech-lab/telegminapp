@@ -43,8 +43,8 @@ $services = [
     ]
 ];
 
-// Each reel now carries both a poster image AND a preview video clip.
-// Hovering (or tapping on mobile) crossfades from poster -> looping muted video.
+// Each reel carries a poster image AND a preview video clip that autoplays,
+// muted and looped, directly in the card.
 $reels = [
     [
         "id" => 1, "category" => "wedding", "meta" => "4K · 24FPS · T2.1", "title" => "THE VOW",
@@ -214,24 +214,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             overflow: hidden;
         }
 
-        .hero-video {
+        #hero-canvas {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             z-index: 1;
-            transform: translate(-50%, -50%) scale(1.02);
-            object-fit: cover;
-            filter: brightness(0.6) contrast(1.1);
-            animation: heroZoom 20s ease-in-out infinite alternate;
-        }
-
-        @keyframes heroZoom {
-            0%   { transform: translate(-50%, -50%) scale(1.02); }
-            100% { transform: translate(-50%, -50%) scale(1.12); }
+            display: block;
         }
 
         .hero-overlay {
@@ -239,28 +228,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             inset: 0;
             background: linear-gradient(
                 to bottom,
-                rgba(5, 5, 5, 0.4) 0%,
-                rgba(5, 5, 5, 0.85) 70%,
+                rgba(5, 5, 5, 0.15) 0%,
+                rgba(5, 5, 5, 0.75) 70%,
                 rgba(5, 5, 5, 1) 100%
             );
             z-index: 2;
-        }
-
-        /* subtle animated film-grain / scanline texture for a modern cinematic feel */
-        .hero-scanlines {
-            position: absolute;
-            inset: 0;
-            z-index: 2;
             pointer-events: none;
-            background: repeating-linear-gradient(
-                to bottom,
-                rgba(255,255,255,0.02) 0px,
-                rgba(255,255,255,0.02) 1px,
-                transparent 1px,
-                transparent 3px
-            );
-            mix-blend-mode: overlay;
-            opacity: 0.5;
         }
 
         #hero {
@@ -429,67 +402,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             background: #000;
         }
 
-        .reel-poster,
         .reel-video {
-            position: absolute;
-            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            filter: grayscale(30%);
+            transition: filter 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .reel-poster {
-            filter: grayscale(35%) brightness(0.95);
-            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 2;
-        }
-
-        .reel-video {
-            opacity: 0;
-            transform: scale(1.06);
-            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 1;
-        }
-
-        .reel-card.is-playing .reel-poster {
-            opacity: 0;
-            transform: scale(1.08);
-        }
-
-        .reel-card.is-playing .reel-video {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .reel-card:hover .reel-media {
-            transform: scale(1.02);
-        }
-
-        .reel-play-icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(1);
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            border: 1.5px solid rgba(255,255,255,0.7);
-            background: rgba(5,5,5,0.35);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 3;
-            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16,1,0.3,1);
-        }
-
-        .reel-play-icon svg { fill: #fff; margin-left: 3px; }
-
-        .reel-card.is-playing .reel-play-icon {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.6);
+        .reel-card:hover .reel-video {
+            filter: grayscale(0%);
+            transform: scale(1.04);
         }
 
         .reel-meta {
@@ -664,11 +588,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </header>
 
 <div id="hero-wrapper">
-    <video class="hero-video" autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1920&q=80">
-        <source src="https://assets.mixkit.co/videos/preview/mixkit-photographer-taking-pictures-in-a-studio-41484-large.mp4" type="video/mp4">
-    </video>
+    <canvas id="hero-canvas"></canvas>
     <div class="hero-overlay"></div>
-    <div class="hero-scanlines"></div>
 
     <div id="hero">
         <div class="lens-tag">NOW SHOWING · FEATURED FILM STUDIO</div>
@@ -698,13 +619,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <div class="reels-grid">
         <?php foreach ($reels as $r): ?>
-            <div class="reel-card" data-reel-card>
+            <div class="reel-card">
                 <div class="reel-media">
-                    <img src="<?= $r['image'] ?>" class="reel-poster" alt="<?= $r['title'] ?>">
-                    <video class="reel-video" src="<?= $r['video'] ?>" muted loop playsinline preload="none"></video>
-                    <div class="reel-play-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    </div>
+                    <video class="reel-video" src="<?= $r['video'] ?>" poster="<?= $r['image'] ?>" autoplay muted loop playsinline preload="metadata"></video>
                 </div>
                 <div class="reel-meta">
                     <div class="cam-specs"><?= $r['meta'] ?></div>
@@ -787,8 +704,130 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <p>&copy; <?= date('Y') ?> <?= $studio_name ?> FILM STUDIO · STUDIO: <?= $location ?> · TEL: <?= $phone ?></p>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
+// ============================================
+// HERO: Interactive 3D particle field (Three.js)
+// A cloud of gold/white points drifts slowly and
+// tilts toward the mouse position for a subtle
+// parallax, cinematic feel.
+// ============================================
+(function () {
+    const canvas = document.getElementById('hero-canvas');
+    if (!canvas || typeof THREE === 'undefined') return;
+
+    const heroWrapper = document.getElementById('hero-wrapper');
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 60;
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Particle geometry: a scattered field of points in a wide box
+    const PARTICLE_COUNT = 1400;
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    const speeds = new Float32Array(PARTICLE_COUNT);
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+        positions[i * 3]     = (Math.random() - 0.5) * 220; // x
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 140; // y
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 160; // z
+        speeds[i] = 0.05 + Math.random() * 0.15;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    // Mix of warm gold and soft white points, like light dust in a studio
+    const material = new THREE.PointsMaterial({
+        size: 0.9,
+        color: 0xe2b13c,
+        transparent: true,
+        opacity: 0.75,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+    });
+
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    // A second, sparser layer of larger soft-white points for depth
+    const bgCount = 300;
+    const bgPositions = new Float32Array(bgCount * 3);
+    for (let i = 0; i < bgCount; i++) {
+        bgPositions[i * 3]     = (Math.random() - 0.5) * 300;
+        bgPositions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+        bgPositions[i * 3 + 2] = (Math.random() - 0.5) * 260 - 60;
+    }
+    const bgGeometry = new THREE.BufferGeometry();
+    bgGeometry.setAttribute('position', new THREE.BufferAttribute(bgPositions, 3));
+    const bgMaterial = new THREE.PointsMaterial({
+        size: 1.6,
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.25,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+    });
+    const bgParticles = new THREE.Points(bgGeometry, bgMaterial);
+    scene.add(bgParticles);
+
+    // Mouse-reactive parallax target
+    let targetRotX = 0, targetRotY = 0;
+    let mouseX = 0, mouseY = 0;
+
+    function onPointerMove(clientX, clientY) {
+        const rect = heroWrapper.getBoundingClientRect();
+        mouseX = ((clientX - rect.left) / rect.width) * 2 - 1;
+        mouseY = ((clientY - rect.top) / rect.height) * 2 - 1;
+        targetRotY = mouseX * 0.35;
+        targetRotX = mouseY * 0.2;
+    }
+
+    window.addEventListener('mousemove', function (e) {
+        onPointerMove(e.clientX, e.clientY);
+    });
+    window.addEventListener('touchmove', function (e) {
+        if (e.touches && e.touches[0]) {
+            onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+    }, { passive: true });
+
+    function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    window.addEventListener('resize', onResize);
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const elapsed = clock.getElapsedTime();
+
+        // Slow ambient drift
+        particles.rotation.y = elapsed * 0.02;
+        bgParticles.rotation.y = -elapsed * 0.01;
+
+        // Ease camera/scene rotation toward mouse target for a smooth parallax feel
+        scene.rotation.y += (targetRotY - scene.rotation.y) * 0.04;
+        scene.rotation.x += (targetRotX - scene.rotation.x) * 0.04;
+
+        // Gentle vertical bob per-particle via camera position (kept subtle)
+        camera.position.x += (mouseX * 6 - camera.position.x) * 0.02;
+        camera.position.y += (-mouseY * 4 - camera.position.y) * 0.02;
+        camera.lookAt(scene.position);
+
+        renderer.render(scene, camera);
+    }
+    animate();
+})();
+
 document.addEventListener("DOMContentLoaded", function () {
     const unavailableDates = <?= json_encode($booked_dates) ?>;
 
@@ -797,54 +836,6 @@ document.addEventListener("DOMContentLoaded", function () {
         minDate: "today",
         disable: unavailableDates,
         locale: { firstDayOfWeek: 1 }
-    });
-
-    // Reel cards: crossfade poster -> looping muted preview video on hover/tap
-    const reelCards = document.querySelectorAll('[data-reel-card]');
-    reelCards.forEach(function (card) {
-        const video = card.querySelector('.reel-video');
-        if (!video) return;
-
-        let playPromise;
-
-        function startPreview() {
-            card.classList.add('is-playing');
-            if (video.readyState < 2) {
-                video.preload = 'auto';
-                video.load();
-            }
-            playPromise = video.play().catch(function () {
-                // Autoplay can be blocked in some contexts — fail silently, poster stays visible.
-                card.classList.remove('is-playing');
-            });
-        }
-
-        function stopPreview() {
-            card.classList.remove('is-playing');
-            Promise.resolve(playPromise).finally(function () {
-                video.pause();
-                video.currentTime = 0;
-            });
-        }
-
-        card.addEventListener('mouseenter', startPreview);
-        card.addEventListener('mouseleave', stopPreview);
-
-        // Touch devices: tap to toggle preview instead of relying on hover
-        card.addEventListener('touchstart', function (e) {
-            if (card.classList.contains('is-playing')) {
-                stopPreview();
-            } else {
-                reelCards.forEach(function (other) {
-                    if (other !== card) {
-                        const otherVideo = other.querySelector('.reel-video');
-                        other.classList.remove('is-playing');
-                        if (otherVideo) { otherVideo.pause(); otherVideo.currentTime = 0; }
-                    }
-                });
-                startPreview();
-            }
-        }, { passive: true });
     });
 });
 </script>
