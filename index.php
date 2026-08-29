@@ -193,26 +193,62 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         nav a:hover { color: #fff; }
 
-        /* CINEMATIC HERO */
+        /* HERO SECTION WITH VIDEO BACKGROUND */
         #hero-wrapper {
             position: relative;
             width: 100%;
             min-height: 100vh;
-            background: linear-gradient(
-                to bottom,
-                rgba(5, 5, 5, 0.4) 0%,
-                rgba(5, 5, 5, 0.95) 100%
-            ), url('https://lightroom-photoshop-tutorials.com/wp-content/uploads/2021/09/Best-Mirrorless-Cameras-for-Professional-Photographers.webp') center/cover no-repeat;
             display: flex;
             align-items: flex-end;
             padding-bottom: 80px;
+            overflow: hidden;
+        }
+
+        .hero-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: 1;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            filter: brightness(0.6) contrast(1.1);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(5, 5, 5, 0.4) 0%,
+                rgba(5, 5, 5, 0.85) 70%,
+                rgba(5, 5, 5, 1) 100%
+            );
+            z-index: 2;
         }
 
         #hero {
+            position: relative;
+            z-index: 3;
             max-width: 1300px;
             margin: auto;
             width: 100%;
             padding: 0 30px;
+            animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .lens-tag {
@@ -236,16 +272,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .hero-text p {
             max-width: 550px;
             font-size: 18px;
-            color: var(--text-muted);
+            color: #d1d5db;
             margin-bottom: 35px;
         }
 
         /* TICKER / MARQUEE */
         .marquee-container {
+            position: relative;
+            z-index: 4;
             width: 100%;
             overflow: hidden;
             background: var(--bg-card);
-            border-y: 1px solid var(--border-line);
+            border-top: 1px solid var(--border-line);
+            border-bottom: 1px solid var(--border-line);
             padding: 18px 0;
             white-space: nowrap;
         }
@@ -498,6 +537,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </header>
 
 <div id="hero-wrapper">
+    <video class="hero-video" autoplay loop muted playsinline poster="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1920&q=80">
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-photographer-taking-pictures-in-a-studio-41484-large.mp4" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+
     <div id="hero">
         <div class="lens-tag">NOW SHOWING · FEATURED FILM STUDIO</div>
         <div class="hero-text">
