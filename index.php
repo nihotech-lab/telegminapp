@@ -15,6 +15,64 @@ $options = [
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
+// Studio Data
+$studio_name = "Studio Vision";
+$tagline     = "Professional Photo & Video Home Studio";
+$phone       = "+251 900 000 000";
+$location    = "Addis Ababa, Ethiopia";
+
+$services = [
+    [
+        "title"       => "Portrait & Headshots",
+        "price"       => "Br 1,500 / session",
+        "description" => "High-end creative portraits with customized backdrop lighting setups."
+    ],
+    [
+        "title"       => "Product Photography",
+        "price"       => "Br 2,000 / batch",
+        "description" => "Clean, high-resolution product photography optimized for e-commerce and social ads."
+    ],
+    [
+        "title"       => "Content Creator Studio Rental",
+        "price"       => "Br 800 / hour",
+        "description" => "Full studio space access with softboxes, RGB accent lights, ring lights, and background panels."
+    ]
+];
+
+$gallery_items = [
+    [
+        "id" => 1, "category" => "portraits", "title" => "Neon Glow Portrait",
+        "caption" => "Dual-tone RGB softbox setup with dark velvet backdrop.",
+        "image" => "https://picsum.photos/id/1027/1200/800"
+    ],
+    [
+        "id" => 2, "category" => "products", "title" => "Luxury Watch Showcase",
+        "caption" => "Macro product shot utilizing continuous LED ring lighting.",
+        "image" => "https://picsum.photos/id/1060/1200/800"
+    ],
+    [
+        "id" => 3, "category" => "studio", "title" => "Pro Lighting Setup",
+        "caption" => "Home studio floor plan with double softbox diffusers and boom arm.",
+        "image" => "https://picsum.photos/id/250/1200/800"
+    ],
+    [
+        "id" => 4, "category" => "portraits", "title" => "Minimalist Headshot",
+        "caption" => "High-key studio lighting with seamless white backdrop.",
+        "image" => "https://picsum.photos/id/64/1200/800"
+    ],
+    [
+        "id" => 5, "category" => "products", "title" => "Skincare Brand Ad",
+        "caption" => "E-commerce flat-lay presentation with natural diffusion fill.",
+        "image" => "https://picsum.photos/id/1059/1200/800"
+    ],
+    [
+        "id" => 6, "category" => "studio", "title" => "RGB Ambient Rig",
+        "caption" => "Customizable mood lighting configurations for video podcasts and streams.",
+        "image" => "https://picsum.photos/id/445/1200/800"
+    ]
+];
+
+// Backend Processing & Fetching Reserved Dates
 $message = "";
 $message_type = "";
 $booked_dates = [];
@@ -22,19 +80,16 @@ $booked_dates = [];
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 
-    // Fetch all existing booked dates from the database
+    // Fetch existing booked dates
     $stmt = $pdo->query("SELECT booking_date FROM bookings");
     $booked_dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
 } catch (\PDOException $e) {
-    // Graceful fallback for demo setup
-    $booked_dates = ["2026-09-05", "2026-09-12"]; 
+    // Fallback demo dates if DB isn't connected yet
+    $booked_dates = ["2026-09-05", "2026-09-12"];
 }
 
-// =====================================
-// FORM SUBMISSION & BACKEND VALIDATION
-// =====================================
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($pdo)) {
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $client_name  = trim(htmlspecialchars($_POST["name"] ?? ""));
     $client_email = trim(filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL));
     $service_type = trim(htmlspecialchars($_POST["service"] ?? ""));
@@ -42,28 +97,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($pdo)) {
     $notes        = trim(htmlspecialchars($_POST["notes"] ?? ""));
 
     if ($client_name && $client_email && $booking_date) {
-        
-        // SERVER-SIDE DOUBLE BOOKING GUARD: Check if date was booked while user was filling the form
-        $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM bookings WHERE booking_date = ?");
-        $check_stmt->execute([$booking_date]);
-        $already_booked = $check_stmt->fetchColumn();
+        if (isset($pdo)) {
+            // Check double booking server-side
+            $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM bookings WHERE booking_date = ?");
+            $check_stmt->execute([$booking_date]);
 
-        if ($already_booked > 0) {
-            $message = "Selected date ($booking_date) is already booked. Please select another date.";
-            $message_type = "error";
+            if ($check_stmt->fetchColumn() > 0) {
+                $message = "The selected date ($booking_date) was just reserved. Please pick another date.";
+                $message_type = "error";
+            } else {
+                $insert_stmt = $pdo->prepare("INSERT INTO bookings (client_name, client_email, service_type, booking_date, notes) VALUES (?, ?, ?, ?, ?)");
+                $insert_stmt->execute([$client_name, $client_email, $service_type, $booking_date, $notes]);
+                
+                $message = "Session successfully booked for $booking_date!";
+                $message_type = "success";
+                $booked_dates[] = $booking_date;
+            }
         } else {
-            // Insert reservation securely
-            $insert_stmt = $pdo->prepare("INSERT INTO bookings (client_name, client_email, service_type, booking_date, notes) VALUES (?, ?, ?, ?, ?)");
-            $insert_stmt->execute([$client_name, $client_email, $service_type, $booking_date, $notes]);
-            
-            $message = "Session successfully reserved for $booking_date!";
+            $message = "Demo mode: Form submitted for $booking_date (Database not connected).";
             $message_type = "success";
-            
-            // Refresh disabled dates list
             $booked_dates[] = $booking_date;
         }
     } else {
-        $message = "Please fill in all required fields with valid details.";
+        $message = "Please fill in all required fields accurately.";
         $message_type = "error";
     }
 }
@@ -74,26 +130,388 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($pdo)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Studio Booking | Dynamic Datepicker</title>
+    <title><?= $studio_name ?> | <?= $tagline ?></title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
 
     <style>
-        body {
-            background-color: #090d16;
-            color: #f3f4f6;
-            font-family: Arial, sans-serif;
-            padding: 50px 20px;
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: #121929;
+            --accent-gold: #f59e0b;
+            --accent-blue: #2563eb;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-line: rgba(255, 255, 255, 0.1);
         }
 
-        .booking-card {
-            background: #121929;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            max-width: 600px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(9, 13, 22, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-line);
+            z-index: 1000;
+        }
+
+        nav {
+            max-width: 1200px;
             margin: auto;
-            padding: 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        .logo span {
+            color: var(--accent-gold);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--accent-gold);
+        }
+
+        section {
+            max-width: 1200px;
+            margin: auto;
+            padding: 100px 30px 60px;
+        }
+
+        /* HERO SECTION */
+        #hero {
+            min-height: 85vh;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            padding-top: 140px;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-text h1 {
+            font-size: clamp(38px, 6vw, 62px);
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff, var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-text p {
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--accent-gold);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #fff;
+            border: 1px solid var(--border-line);
+            margin-left: 10px;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        /* SECTION HEADINGS */
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-title h2 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        /* SERVICES GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
             border-radius: 12px;
+            padding: 30px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-gold);
+        }
+
+        .card h3 {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .price-badge {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-gold);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        /* GALLERY SECTION */
+        .filter-bar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 35px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            color: var(--text-muted);
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--accent-gold);
+            color: #000;
+            border-color: var(--accent-gold);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            cursor: pointer;
+            aspect-ratio: 4/3;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.08);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(9, 13, 22, 0.95), rgba(9, 13, 22, 0.2));
+            opacity: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            transition: opacity 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+
+        .gallery-overlay h4 {
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .gallery-overlay p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* LIGHTBOX POPUP MODAL */
+        .lightbox-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 13, 22, 0.75);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .lightbox-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .lightbox-content {
+            background: rgba(18, 25, 41, 0.9);
+            border: 1px solid var(--border-line);
+            border-radius: 16px;
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .lightbox-img-wrapper {
+            position: relative;
+            width: 100%;
+            max-height: 550px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox-img-wrapper img {
+            max-width: 100%;
+            max-height: 550px;
+            object-fit: contain;
+        }
+
+        .lightbox-meta {
+            padding: 20px 25px;
+            background: var(--bg-card);
+        }
+
+        .lightbox-meta h3 {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+
+        .lightbox-meta p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 30px;
+            color: #fff;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            border: 1px solid var(--border-line);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .lightbox-nav:hover {
+            background: var(--accent-gold);
+            color: #000;
+        }
+
+        .lightbox-prev { left: 15px; }
+        .lightbox-next { right: 15px; }
+
+        /* BOOKING FORM */
+        .form-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            padding: 40px;
+            border-radius: 16px;
+            max-width: 700px;
+            margin: auto;
         }
 
         .form-group {
@@ -103,102 +521,303 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($pdo)) {
         label {
             display: block;
             margin-bottom: 8px;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         input, select, textarea {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: #0b101d;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-line);
             border-radius: 8px;
-            color: #fff;
-            font-size: 15px;
-            box-sizing: border-box;
+            color: white;
+            font-size: 16px;
+            outline: none;
         }
 
-        .btn-submit {
-            background: #f59e0b;
-            color: #000;
-            border: none;
-            padding: 14px;
-            width: 100%;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-gold);
         }
 
         .alert {
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
+            text-align: center;
         }
 
-        .alert-success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-        .alert-error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .alert-success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #34d399;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #f87171;
+        }
+
+        footer {
+            border-top: 1px solid var(--border-line);
+            padding: 30px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            #hero {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .btn-secondary {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+
+            nav ul {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="booking-card">
-    <h2>Reserve Studio Time</h2>
-    <p style="color: #9ca3af; margin-bottom: 25px;">Dates highlighted in gray are unavailable.</p>
+<header>
+    <nav>
+        <div class="logo"><?= $studio_name ?><span>.</span></div>
+        <ul>
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#gallery">Showcase</a></li>
+            <li><a href="#booking">Book Studio</a></li>
+        </ul>
+    </nav>
+</header>
 
-    <?php if ($message): ?>
-        <div class="alert alert-<?= $message_type ?>">
-            <?= htmlspecialchars($message) ?>
+<section id="hero">
+    <div class="hero-text">
+        <h1>Capture Your Best Moments At Home</h1>
+        <p><?= $tagline ?>. Equipped with studio lighting, professional backdrops, and high-resolution camera gear.</p>
+        <a href="#booking" class="btn btn-primary">Book Studio Session</a>
+        <a href="#gallery" class="btn btn-secondary">View Showcase</a>
+    </div>
+</section>
+
+<section id="services">
+    <div class="section-title">
+        <h2>Our Offerings</h2>
+        <p style="color: var(--text-muted);">Choose a service or rent the studio space directly</p>
+    </div>
+
+    <div class="grid">
+        <?php foreach ($services as $s): ?>
+            <div class="card">
+                <h3><?= htmlspecialchars($s["title"]) ?></h3>
+                <span class="price-badge"><?= htmlspecialchars($s["price"]) ?></span>
+                <p style="color: var(--text-muted);"><?= htmlspecialchars($s["description"]) ?></p>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</section>
+
+<section id="gallery">
+    <div class="section-title">
+        <h2>Studio Showcase</h2>
+        <p style="color: var(--text-muted);">Explore sample photos and studio configurations</p>
+    </div>
+
+    <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">All Items</button>
+        <button class="filter-btn" data-filter="portraits">Portraits</button>
+        <button class="filter-btn" data-filter="products">Product Ads</button>
+        <button class="filter-btn" data-filter="studio">Studio Setup</button>
+    </div>
+
+    <div class="gallery-grid">
+        <?php foreach ($gallery_items as $index => $item): ?>
+            <div class="gallery-item" 
+                 data-category="<?= $item['category'] ?>" 
+                 data-index="<?= $index ?>"
+                 data-title="<?= htmlspecialchars($item['title']) ?>"
+                 data-caption="<?= htmlspecialchars($item['caption']) ?>"
+                 data-src="<?= $item['image'] ?>">
+                <img src="<?= $item['image'] ?>" alt="<?= htmlspecialchars($item['title']) ?>" loading="lazy">
+                <div class="gallery-overlay">
+                    <h4><?= htmlspecialchars($item['title']) ?></h4>
+                    <p><?= htmlspecialchars($item['caption']) ?></p>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</section>
+
+<section id="booking">
+    <div class="section-title">
+        <h2>Book A Session</h2>
+        <p style="color: var(--text-muted);">Reserve studio time (Unavailable dates are grayed out automatically)</p>
+    </div>
+
+    <div class="form-container">
+        <?php if ($message): ?>
+            <div class="alert alert-<?= $message_type ?>">
+                <?= htmlspecialchars($message) ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" action="#booking">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" placeholder="Your name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="yourname@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label>Select Service</label>
+                <select name="service">
+                    <option>Portrait & Headshots</option>
+                    <option>Product Photography</option>
+                    <option>Studio Space Rental</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Select Date</label>
+                <input type="text" id="datepicker" name="date" placeholder="Click to choose an available date..." required readonly>
+            </div>
+
+            <div class="form-group">
+                <label>Additional Notes / Details</label>
+                <textarea name="notes" rows="4" placeholder="Tell us about your shoot requirements..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Confirm Reservation</button>
+        </form>
+    </div>
+</section>
+
+<div class="lightbox-modal" id="lightbox">
+    <div class="lightbox-content">
+        <button class="lightbox-close" id="lightboxClose">&times;</button>
+        <button class="lightbox-nav lightbox-prev" id="lightboxPrev">&#10094;</button>
+        <button class="lightbox-nav lightbox-next" id="lightboxNext">&#10095;</button>
+        
+        <div class="lightbox-img-wrapper">
+            <img id="lightboxImg" src="" alt="Gallery Image">
         </div>
-    <?php endif; ?>
-
-    <form method="POST">
-        <div class="form-group">
-            <label for="name">Full Name</label>
-            <input type="text" id="name" name="name" required>
+        
+        <div class="lightbox-meta">
+            <h3 id="lightboxTitle"></h3>
+            <p id="lightboxCaption"></p>
         </div>
-
-        <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" name="email" required>
-        </div>
-
-        <div class="form-group">
-            <label for="service">Service Type</label>
-            <select id="service" name="service">
-                <option>Portrait & Headshots</option>
-                <option>Product Photography</option>
-                <option>Studio Space Rental</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="date">Select Available Date</label>
-            <input type="text" id="date" name="date" placeholder="Click to select date..." required readonly>
-        </div>
-
-        <div class="form-group">
-            <label for="notes">Notes</label>
-            <textarea id="notes" name="notes" rows="3"></textarea>
-        </div>
-
-        <button type="submit" class="btn-submit">Submit Reservation</button>
-    </form>
+    </div>
 </div>
+
+<footer>
+    <p>&copy; <?= date('Y') ?> <?= $studio_name ?>. Located in <?= $location ?>. Contact: <?= $phone ?></p>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Array of booked dates injected directly from PHP backend
+document.addEventListener("DOMContentLoaded", function () {
+    // 1. Double-Booking Prevention Datepicker
     const unavailableDates = <?= json_encode($booked_dates) ?>;
 
-    flatpickr("#date", {
+    flatpickr("#datepicker", {
         dateFormat: "Y-m-d",
-        minDate: "today", // Prevents selecting past dates
-        disable: unavailableDates, // Grays out unavailable dates on the calendar
+        minDate: "today",
+        disable: unavailableDates,
         locale: {
             firstDayOfWeek: 1
         }
+    });
+
+    // 2. Gallery Filter Logic
+    const filterBtns = document.querySelectorAll(".filter-btn");
+    const galleryItems = document.querySelectorAll(".gallery-item");
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            filterBtns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const filter = btn.dataset.filter;
+
+            galleryItems.forEach(item => {
+                if (filter === "all" || item.dataset.category === filter) {
+                    item.style.display = "block";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        });
+    });
+
+    // 3. Lightbox Gallery Popup Logic
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightboxImg");
+    const lightboxTitle = document.getElementById("lightboxTitle");
+    const lightboxCaption = document.getElementById("lightboxCaption");
+    const closeBtn = document.getElementById("lightboxClose");
+    const prevBtn = document.getElementById("lightboxPrev");
+    const nextBtn = document.getElementById("lightboxNext");
+
+    let visibleItems = [];
+    let currentIndex = 0;
+
+    function updateVisibleItems() {
+        visibleItems = Array.from(galleryItems).filter(item => item.style.display !== "none");
+    }
+
+    function openLightbox(element) {
+        updateVisibleItems();
+        currentIndex = visibleItems.indexOf(element);
+        showImage(currentIndex);
+        lightbox.classList.add("active");
+    }
+
+    function showImage(index) {
+        if (visibleItems.length === 0) return;
+        const item = visibleItems[index];
+        lightboxImg.src = item.dataset.src;
+        lightboxTitle.textContent = item.dataset.title;
+        lightboxCaption.textContent = item.dataset.caption;
+    }
+
+    galleryItems.forEach(item => {
+        item.addEventListener("click", () => openLightbox(item));
+    });
+
+    closeBtn.addEventListener("click", () => {
+        lightbox.classList.remove("active");
+    });
+
+    lightbox.addEventListener("click", (e) => {
+        if (e.target === lightbox) lightbox.classList.remove("active");
+    });
+
+    prevBtn.addEventListener("click", () => {
+        currentIndex = (currentIndex - 1 + visibleItems.length) % visibleItems.length;
+        showImage(currentIndex);
+    });
+
+    nextBtn.addEventListener("click", () => {
+        currentIndex = (currentIndex + 1) % visibleItems.length;
+        showImage(currentIndex);
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (!lightbox.classList.contains("active")) return;
+        if (e.key === "Escape") lightbox.classList.remove("active");
+        if (e.key === "ArrowLeft") prevBtn.click();
+        if (e.key === "ArrowRight") nextBtn.click();
     });
 });
 </script>
