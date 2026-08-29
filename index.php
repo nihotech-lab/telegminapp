@@ -1,54 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { font-family: sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 20px; }
-        .score-box { font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #333; }
-        .tap-btn { padding: 80px; font-size: 20px; color: #fff; background-color: #3b82f6; border: none; border-radius: 50%; cursor: pointer; }
-        .tap-btn:active { background-color: #2563eb; transform: scale(0.95); }
-    </style>
-</head>
-<body>
-    <div class="score-box">Score: <span id="score">0</span></div>
-    <button class="tap-btn" id="tap-btn">TAP!</button>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        const user = tg.initDataUnsafe.user;
-        let score = 0;
-        document.getElementById('tap-btn').addEventListener('click', () => {
-            score++;
-            document.getElementById('score').innerText = score;
-        });
-
-        window.addEventListener('beforeunload', () => {
-            if (user && score > 0) {
-                fetch('', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `submit_score=1&user_id=${user.id}&username=${user.username || 'unknown'}&score=${score}`
-                });
-            }
-        });
-    </script>
-
-    <!-- <?php
-    // if (isset($_POST['submit_score'])) {
-        // $user_id = $_POST['user_id'];
-        // $username = $_POST['username'];
-        // $score = $_POST['score'];
-        // $data = "User ID: $user_id | Username: $username | Score: $score\n";
-        // file_put_contents('scores.txt', $data, FILE_APPEND);
-        // exit; -->
-    // }
-    // ?>
-</body>
-</html> -->
-
 <?php
 // =====================================
 // DATABASE CONFIGURATION (PDO)
@@ -67,10 +16,10 @@ $options = [
 ];
 
 // Studio Data
-$studio_name = "Photo luqas Vision";
+$studio_name = "Studio Vision";
 $tagline     = "Professional Photo & Video Home Studio";
 $phone       = "+251 900 000 000";
-$location    = "Bonga Kaffa, Ethiopia";
+$location    = "Addis Ababa, Ethiopia";
 
 $services = [
     [
@@ -94,32 +43,32 @@ $gallery_items = [
     [
         "id" => 1, "category" => "portraits", "title" => "Neon Glow Portrait",
         "caption" => "Dual-tone RGB softbox setup with dark velvet backdrop.",
-        "image" => "https://picsum.photos/id/1027/1200/800"
+        "image" => "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80"
     ],
     [
         "id" => 2, "category" => "products", "title" => "Luxury Watch Showcase",
         "caption" => "Macro product shot utilizing continuous LED ring lighting.",
-        "image" => "https://picsum.photos/id/1060/1200/800"
+        "image" => "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=80"
     ],
     [
         "id" => 3, "category" => "studio", "title" => "Pro Lighting Setup",
         "caption" => "Home studio floor plan with double softbox diffusers and boom arm.",
-        "image" => "https://picsum.photos/id/250/1200/800"
+        "image" => "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1200&q=80"
     ],
     [
         "id" => 4, "category" => "portraits", "title" => "Minimalist Headshot",
         "caption" => "High-key studio lighting with seamless white backdrop.",
-        "image" => "https://picsum.photos/id/64/1200/800"
+        "image" => "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1200&q=80"
     ],
     [
         "id" => 5, "category" => "products", "title" => "Skincare Brand Ad",
         "caption" => "E-commerce flat-lay presentation with natural diffusion fill.",
-        "image" => "https://picsum.photos/id/1059/1200/800"
+        "image" => "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=80"
     ],
     [
         "id" => 6, "category" => "studio", "title" => "RGB Ambient Rig",
         "caption" => "Customizable mood lighting configurations for video podcasts and streams.",
-        "image" => "https://picsum.photos/id/445/1200/800"
+        "image" => "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80"
     ]
 ];
 
@@ -214,8 +163,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(9, 13, 22, 0.9);
-            backdrop-filter: blur(10px);
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-line);
             z-index: 1000;
         }
@@ -237,9 +186,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         .logo span {
-            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent-gold);
         }
 
         nav ul {
@@ -259,58 +206,56 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             color: var(--accent-gold);
         }
 
-        section {
-            max-width: 1200px;
-            margin: auto;
-            padding: 100px 30px 60px;
-        }
-
-        /* HERO SECTION */
-        #hero {
-            min-height: 85vh;
+        /* HERO SECTION WITH BACKGROUND IMAGE */
+        #hero-wrapper {
+            position: relative;
+            width: 100%;
+            min-height: 90vh;
+            background: linear-gradient(
+                to right,
+                rgba(9, 13, 22, 0.95) 0%,
+                rgba(9, 13, 22, 0.75) 50%,
+                rgba(9, 13, 22, 0.5) 100%
+            ), url('https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 40px;
-            padding-top: 140px;
-            max-width: 100%;
-            margin: 0;
-            padding-left: 30px;
-            padding-right: 30px;
-            background: linear-gradient(rgba(9, 13, 22, 0.5), rgba(9, 13, 22, 0.6)), 
-                        url('https://images.unsplash.com/photo-1537904904737-13fc7e91a072?w=1600&h=900&fit=crop') center/cover no-repeat fixed;
-            background-attachment: fixed;
-            position: relative;
-            overflow: hidden;
+        }
+
+        #hero {
+            max-width: 1200px;
+            margin: auto;
+            width: 100%;
+            padding: 140px 30px 80px;
         }
 
         .hero-text {
-            flex: 1;
-            position: relative;
-            z-index: 2;
+            max-width: 650px;
         }
 
         .hero-text h1 {
-            font-size: clamp(38px, 6vw, 62px);
+            font-size: clamp(40px, 6vw, 64px);
             line-height: 1.1;
             margin-bottom: 20px;
-            background: linear-gradient(135deg, #fff, var(--accent-gold), #ff6b6b, #4f46e5);
-            background-size: 300% 300%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientShift 8s ease infinite;
+            color: #ffffff;
+            font-weight: 800;
         }
 
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .hero-text h1 span {
+            background: linear-gradient(135deg, #fff, var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .hero-text p {
-            font-size: 18px;
-            color: var(--text-muted);
-            margin-bottom: 30px;
+            font-size: 19px;
+            color: #d1d5db;
+            margin-bottom: 35px;
+        }
+
+        section {
+            max-width: 1200px;
+            margin: auto;
+            padding: 90px 30px;
         }
 
         .btn {
@@ -325,21 +270,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b);
+            background: var(--accent-gold);
             color: #000;
-            font-weight: 700;
         }
 
         .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.5), 0 0 20px rgba(255, 107, 107, 0.3);
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
         }
 
         .btn-secondary {
-            background: transparent;
+            background: rgba(18, 25, 41, 0.8);
             color: #fff;
             border: 1px solid var(--border-line);
             margin-left: 10px;
+            backdrop-filter: blur(5px);
         }
 
         .btn-secondary:hover {
@@ -356,16 +301,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .section-title h2 {
             font-size: 36px;
             margin-bottom: 10px;
-            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b, #4f46e5);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 2px 10px rgba(245, 158, 11, 0.2);
-        }
-
-        .section-title p {
-            background: linear-gradient(135deg, var(--text-muted), var(--accent-gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
         /* SERVICES GRID */
@@ -391,29 +326,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .card h3 {
             font-size: 22px;
             margin-bottom: 10px;
-            color: var(--accent-gold);
-            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .card p {
-            color: #b4c0db;
-            line-height: 1.8;
         }
 
         .price-badge {
             display: inline-block;
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(255, 107, 107, 0.2));
+            background: rgba(245, 158, 11, 0.15);
             color: var(--accent-gold);
-            padding: 8px 16px;
+            padding: 4px 12px;
             border-radius: 20px;
             font-size: 14px;
             font-weight: bold;
             margin-bottom: 15px;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         /* GALLERY SECTION */
@@ -487,22 +410,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         .gallery-overlay h4 {
             font-size: 20px;
-            background: linear-gradient(135deg, #fff, var(--accent-gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #fff;
         }
 
         .gallery-overlay p {
             font-size: 14px;
-            color: #d1d5db;
-            margin-top: 5px;
+            color: var(--text-muted);
         }
 
         /* LIGHTBOX POPUP MODAL */
         .lightbox-modal {
             position: fixed;
             inset: 0;
-            background: rgba(9, 13, 22, 0.75);
+            background: rgba(9, 13, 22, 0.8);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             display: flex;
@@ -521,7 +441,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         .lightbox-content {
-            background: rgba(18, 25, 41, 0.9);
+            background: rgba(18, 25, 41, 0.95);
             border: 1px solid var(--border-line);
             border-radius: 16px;
             max-width: 900px;
@@ -557,15 +477,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .lightbox-meta h3 {
             font-size: 22px;
             margin-bottom: 5px;
-            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
         .lightbox-meta p {
-            color: #b4c0db;
+            color: var(--text-muted);
             font-size: 15px;
-            line-height: 1.6;
         }
 
         .lightbox-close {
@@ -624,9 +540,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            background: linear-gradient(135deg, var(--accent-gold), #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
         input, select, textarea {
@@ -642,11 +555,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         input:focus, select:focus, textarea:focus {
             border-color: var(--accent-gold);
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
-        }
-
-        input::placeholder, textarea::placeholder {
-            color: #6b7280;
         }
 
         .alert {
@@ -677,16 +585,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         @media (max-width: 768px) {
-            #hero {
-                flex-direction: column;
+            #hero-wrapper {
+                background: linear-gradient(
+                    to bottom,
+                    rgba(9, 13, 22, 0.95) 0%,
+                    rgba(9, 13, 22, 0.85) 100%
+                ), url('https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat;
+            }
+
+            .hero-text {
                 text-align: center;
-                background-attachment: scroll;
-                padding-top: 100px;
             }
 
             .btn-secondary {
                 margin-left: 0;
-                margin-top: 10px;
+                margin-top: 15px;
             }
 
             nav ul {
@@ -701,7 +614,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <nav>
         <div class="logo"><?= $studio_name ?><span>.</span></div>
         <ul>
-            <li><a href="#hero">Home</a></li>
+            <li><a href="#hero-wrapper">Home</a></li>
             <li><a href="#services">Services</a></li>
             <li><a href="#gallery">Showcase</a></li>
             <li><a href="#booking">Book Studio</a></li>
@@ -709,19 +622,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </nav>
 </header>
 
-<section id="hero">
-    <div class="hero-text">
-        <h1>Capture Your Best Moments At Home</h1>
-        <p><?= $tagline ?>. Equipped with studio lighting, professional backdrops, and high-resolution camera gear.</p>
-        <a href="#booking" class="btn btn-primary">Book Studio Session</a>
-        <a href="#gallery" class="btn btn-secondary">View Showcase</a>
+<div id="hero-wrapper">
+    <div id="hero">
+        <div class="hero-text">
+            <h1>Capture Studio Perfection <span>Right At Home</span></h1>
+            <p><?= $tagline ?>. Fully equipped with softboxes, background panels, RGB continuous accent lights, and high-resolution gear.</p>
+            <a href="#booking" class="btn btn-primary">Book Studio Session</a>
+            <a href="#gallery" class="btn btn-secondary">Explore Showcase</a>
+        </div>
     </div>
-</section>
+</div>
 
 <section id="services">
     <div class="section-title">
         <h2>Our Offerings</h2>
-        <p style="color: var(--text-muted);">Choose a service or rent the studio space directly</p>
+        <p style="color: var(--text-muted);">Choose a photography service or rent the complete studio setup</p>
     </div>
 
     <div class="grid">
@@ -738,7 +653,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <section id="gallery">
     <div class="section-title">
         <h2>Studio Showcase</h2>
-        <p style="color: var(--text-muted);">Explore sample photos and studio configurations</p>
+        <p style="color: var(--text-muted);">Explore sample photo shoots and lighting setups</p>
     </div>
 
     <div class="filter-bar">
