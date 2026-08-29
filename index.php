@@ -26,6 +26,52 @@ $services = [
     ]
 ];
 
+// Showcase items for dynamic JavaScript gallery
+$gallery_items = [
+    [
+        "id" => 1,
+        "category" => "portraits",
+        "title" => "Neon Glow Portrait",
+        "caption" => "Dual-tone RGB softbox setup with dark velvet backdrop.",
+        "image" => "https://picsum.photos/id/1027/1200/800"
+    ],
+    [
+        "id" => 2,
+        "category" => "products",
+        "title" => "Luxury Watch Showcase",
+        "caption" => "Macro product shot utilizing continuous LED ring lighting.",
+        "image" => "https://picsum.photos/id/1060/1200/800"
+    ],
+    [
+        "id" => 3,
+        "category" => "studio",
+        "title" => "Pro Lighting Setup",
+        "caption" => "Home studio floor plan with double softbox diffusers and boom arm.",
+        "image" => "https://picsum.photos/id/250/1200/800"
+    ],
+    [
+        "id" => 4,
+        "category" => "portraits",
+        "title" => "Minimalist Headshot",
+        "caption" => "High-key studio lighting with seamless white backdrop.",
+        "image" => "https://picsum.photos/id/64/1200/800"
+    ],
+    [
+        "id" => 5,
+        "category" => "products",
+        "title" => "Skincare Brand Ad",
+        "caption" => "E-commerce flat-lay presentation with natural diffusion fill.",
+        "image" => "https://picsum.photos/id/1059/1200/800"
+    ],
+    [
+        "id" => 6,
+        "category" => "studio",
+        "title" => "RGB Ambient Rig",
+        "caption" => "Customizable mood lighting configurations for video podcasts and streams.",
+        "image" => "https://picsum.photos/id/445/1200/800"
+    ]
+];
+
 $message_sent = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -36,7 +82,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $notes = htmlspecialchars($_POST["notes"] ?? "");
 
     if (!empty($client_name) && !empty($client_email)) {
-        // Here you can handle saving to database or sending an email notification
         $message_sent = true;
     }
 }
@@ -174,7 +219,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
         }
 
-        /* SERVICES GRID */
+        .btn-secondary {
+            background: transparent;
+            color: #fff;
+            border: 1px solid var(--border-line);
+            margin-left: 10px;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        /* SECTION HEADINGS */
         .section-title {
             text-align: center;
             margin-bottom: 50px;
@@ -185,6 +242,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             margin-bottom: 10px;
         }
 
+        /* SERVICES GRID */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -219,6 +277,189 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             font-weight: bold;
             margin-bottom: 15px;
         }
+
+        /* GALLERY SECTION */
+        .filter-bar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 35px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            color: var(--text-muted);
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--accent-gold);
+            color: #000;
+            border-color: var(--accent-gold);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            cursor: pointer;
+            aspect-ratio: 4/3;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.08);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(9, 13, 22, 0.95), rgba(9, 13, 22, 0.2));
+            opacity: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            transition: opacity 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+
+        .gallery-overlay h4 {
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .gallery-overlay p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* LIGHTBOX POPUP MODAL */
+        .lightbox-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 13, 22, 0.7);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .lightbox-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .lightbox-content {
+            background: rgba(18, 25, 41, 0.9);
+            border: 1px solid var(--border-line);
+            border-radius: 16px;
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .lightbox-img-wrapper {
+            position: relative;
+            width: 100%;
+            max-height: 550px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox-img-wrapper img {
+            max-width: 100%;
+            max-height: 550px;
+            object-fit: contain;
+        }
+
+        .lightbox-meta {
+            padding: 20px 25px;
+            background: var(--bg-card);
+        }
+
+        .lightbox-meta h3 {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+
+        .lightbox-meta p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 30px;
+            color: #fff;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            border: 1px solid var(--border-line);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .lightbox-nav:hover {
+            background: var(--accent-gold);
+            color: #000;
+        }
+
+        .lightbox-prev { left: 15px; }
+        .lightbox-next { right: 15px; }
 
         /* BOOKING FORM */
         .form-container {
@@ -279,6 +520,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 text-align: center;
             }
 
+            .btn-secondary {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+
             nav ul {
                 display: none;
             }
@@ -293,6 +539,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <ul>
             <li><a href="#hero">Home</a></li>
             <li><a href="#services">Services</a></li>
+            <li><a href="#gallery">Showcase</a></li>
             <li><a href="#booking">Book Studio</a></li>
         </ul>
     </nav>
@@ -303,6 +550,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <h1>Capture Your Best Moments At Home</h1>
         <p><?= $tagline ?>. Equipped with studio lighting, professional backdrops, and high-resolution camera gear.</p>
         <a href="#booking" class="btn btn-primary">Book Studio Session</a>
+        <a href="#gallery" class="btn btn-secondary">View Showcase</a>
     </div>
 </section>
 
@@ -318,6 +566,37 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <h3><?= htmlspecialchars($s["title"]) ?></h3>
                 <span class="price-badge"><?= htmlspecialchars($s["price"]) ?></span>
                 <p style="color: var(--text-muted);"><?= htmlspecialchars($s["description"]) ?></p>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</section>
+
+<section id="gallery">
+    <div class="section-title">
+        <h2>Studio Showcase</h2>
+        <p style="color: var(--text-muted);">Explore sample photos and studio configurations</p>
+    </div>
+
+    <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">All Items</button>
+        <button class="filter-btn" data-filter="portraits">Portraits</button>
+        <button class="filter-btn" data-filter="products">Product Ads</button>
+        <button class="filter-btn" data-filter="studio">Studio Setup</button>
+    </div>
+
+    <div class="gallery-grid">
+        <?php foreach ($gallery_items as $index => $item): ?>
+            <div class="gallery-item" 
+                 data-category="<?= $item['category'] ?>" 
+                 data-index="<?= $index ?>"
+                 data-title="<?= htmlspecialchars($item['title']) ?>"
+                 data-caption="<?= htmlspecialchars($item['caption']) ?>"
+                 data-src="<?= $item['image'] ?>">
+                <img src="<?= $item['image'] ?>" alt="<?= htmlspecialchars($item['title']) ?>" loading="lazy">
+                <div class="gallery-overlay">
+                    <h4><?= htmlspecialchars($item['title']) ?></h4>
+                    <p><?= htmlspecialchars($item['caption']) ?></p>
+                </div>
             </div>
         <?php endforeach; ?>
     </div>
@@ -371,9 +650,114 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </div>
 </section>
 
+<div class="lightbox-modal" id="lightbox">
+    <div class="lightbox-content">
+        <button class="lightbox-close" id="lightboxClose">&times;</button>
+        <button class="lightbox-nav lightbox-prev" id="lightboxPrev">&#10094;</button>
+        <button class="lightbox-nav lightbox-next" id="lightboxNext">&#10095;</button>
+        
+        <div class="lightbox-img-wrapper">
+            <img id="lightboxImg" src="" alt="Gallery Image">
+        </div>
+        
+        <div class="lightbox-meta">
+            <h3 id="lightboxTitle"></h3>
+            <p id="lightboxCaption"></p>
+        </div>
+    </div>
+</div>
+
 <footer>
     <p>&copy; <?= date('Y') ?> <?= $studio_name ?>. Located in <?= $location ?>. Contact: <?= $phone ?></p>
 </footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // 1. Gallery Filtering
+    const filterBtns = document.querySelectorAll(".filter-btn");
+    const galleryItems = document.querySelectorAll(".gallery-item");
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            filterBtns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const filter = btn.dataset.filter;
+
+            galleryItems.forEach(item => {
+                if (filter === "all" || item.dataset.category === filter) {
+                    item.style.display = "block";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        });
+    });
+
+    // 2. Dynamic Lightbox Modal
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightboxImg");
+    const lightboxTitle = document.getElementById("lightboxTitle");
+    const lightboxCaption = document.getElementById("lightboxCaption");
+    const closeBtn = document.getElementById("lightboxClose");
+    const prevBtn = document.getElementById("lightboxPrev");
+    const nextBtn = document.getElementById("lightboxNext");
+
+    let visibleItems = [];
+    let currentIndex = 0;
+
+    function updateVisibleItems() {
+        visibleItems = Array.from(galleryItems).filter(item => item.style.display !== "none");
+    }
+
+    function openLightbox(element) {
+        updateVisibleItems();
+        currentIndex = visibleItems.indexOf(element);
+        showImage(currentIndex);
+        lightbox.classList.add("active");
+    }
+
+    function showImage(index) {
+        if (visibleItems.length === 0) return;
+        const item = visibleItems[index];
+        lightboxImg.src = item.dataset.src;
+        lightboxTitle.textContent = item.dataset.title;
+        lightboxCaption.textContent = item.dataset.caption;
+    }
+
+    galleryItems.forEach(item => {
+        item.addEventListener("click", () => openLightbox(item));
+    });
+
+    closeBtn.addEventListener("click", () => {
+        lightbox.classList.remove("active");
+    });
+
+    lightbox.addEventListener("click", (e) => {
+        if (e.target === lightbox) {
+            lightbox.classList.remove("active");
+        }
+    });
+
+    prevBtn.addEventListener("click", () => {
+        currentIndex = (currentIndex - 1 + visibleItems.length) % visibleItems.length;
+        showImage(currentIndex);
+    });
+
+    nextBtn.addEventListener("click", () => {
+        currentIndex = (currentIndex + 1) % visibleItems.length;
+        showImage(currentIndex);
+    });
+
+    // Keyboard navigation support
+    document.addEventListener("keydown", (e) => {
+        if (!lightbox.classList.contains("active")) return;
+        if (e.key === "Escape") lightbox.classList.remove("active");
+        if (e.key === "ArrowLeft") prevBtn.click();
+        if (e.key === "ArrowRight") nextBtn.click();
+    });
+});
+</script>
 
 </body>
 </html>
