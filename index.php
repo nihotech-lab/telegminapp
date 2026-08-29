@@ -15,49 +15,64 @@ $options = [
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
-// AD Pictures Brand Settings
+// Studio Data - AD Pictures Aesthetic
 $studio_name = "AD PICTURES";
-$tagline     = "Cinematic Film Studio & Stills";
+$tagline     = "Wedding & Cinematic Film Studio";
 $phone       = "+251 908 030 809";
 $whatsapp    = "251908030809";
 $location    = "Awlo Business Center, 3rd Floor, Bole Medhanialem, Addis Ababa";
 
 $services = [
     [
-        "badge"       => "4K · 24FPS · T2.1 CINEMA LENS",
+        "badge"       => "4K · 24FPS · T2.1",
         "title"       => "Cinematic Wedding Films",
-        "price"       => "Full Day Directing",
-        "description" => "Directed, lit, and cut like a film — capturing authentic emotion from first light to final dance."
+        "price"       => "Full Day Coverage",
+        "description" => "Directed, lit, and cut like a film — from the first look to the evening celebration."
     ],
     [
-        "badge"       => "35MM · f/1.4 · HDR STILLS",
-        "title"       => "Commercial & Brand Stills",
-        "price"       => "Campaign Production",
-        "description" => "High-impact editorial imagery and video campaigns crafted to elevate luxury brand identity."
+        "badge"       => "50mm · f/1.4 · HDR",
+        "title"       => "Commercial & Stills",
+        "price"       => "Brand Stills & Video",
+        "description" => "Product campaigns and commercial film built to capture and hold audience attention."
     ],
     [
-        "badge"       => "RAW · MULTI-CAM RIG",
+        "badge"       => "RAW · 35mm · 60FPS",
         "title"       => "Event & Mels Coverage",
-        "price"       => "Multi-Day Package",
-        "description" => "High-energy multi-camera event recording utilizing dynamic ambient lighting setups."
+        "price"       => "Multi-Day Packages",
+        "description" => "High-energy multi-cam event recording with continuous mood lighting rigs."
     ]
 ];
 
+// Each reel carries a poster image AND a preview video clip that autoplays,
+// muted and looped, directly in the card.
 $reels = [
     [
-        "meta" => "4K · 24FPS · CINEMA SCOPE", "title" => "THE VOW", "type" => "Wedding Film",
-        "image" => "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80"
+        "id" => 1, "category" => "wedding", "meta" => "4K · 24FPS · T2.1", "title" => "THE VOW",
+        "type" => "Wedding Film",
+        "image" => "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80",
+        "video" => "https://assets.mixkit.co/videos/preview/mixkit-bride-and-groom-having-fun-on-a-jetty-40188-large.mp4"
     ],
     [
-        "meta" => "35MM · HIGH DYNAMIC RANGE", "title" => "GRAND ENTRANCE", "type" => "Event Film",
-        "image" => "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80"
+        "id" => 2, "category" => "event", "meta" => "4K · 24FPS · T2.8", "title" => "GRAND ENTRANCE",
+        "type" => "Event Film",
+        "image" => "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80",
+        "video" => "https://assets.mixkit.co/videos/preview/mixkit-people-dancing-at-a-party-1230-large.mp4"
     ],
     [
-        "meta" => "50MM · T1.5 SOFT LIGHTING", "title" => "MELS NIGHT", "type" => "Cultural Film",
-        "image" => "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=80"
+        "id" => 3, "category" => "wedding", "meta" => "4K · 24FPS · T2.1", "title" => "MELS NIGHT",
+        "type" => "Cultural Wedding",
+        "image" => "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=80",
+        "video" => "https://assets.mixkit.co/videos/preview/mixkit-traditional-dancers-performing-at-a-festival-4640-large.mp4"
+    ],
+    [
+        "id" => 4, "category" => "portrait", "meta" => "50mm · f/1.2 · ISO 100", "title" => "NIGHT WALK",
+        "type" => "Cinematic Portrait",
+        "image" => "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80",
+        "video" => "https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-woman-walking-at-night-34561-large.mp4"
     ]
 ];
 
+// Database Fetching & Double Booking Logic
 $message = "";
 $message_type = "";
 $booked_dates = [];
@@ -83,18 +98,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $check_stmt->execute([$booking_date]);
 
             if ($check_stmt->fetchColumn() > 0) {
-                $message = "Date ($booking_date) is reserved. Pick another date.";
+                $message = "Date ($booking_date) is reserved. Please pick another date.";
                 $message_type = "error";
             } else {
                 $insert_stmt = $pdo->prepare("INSERT INTO bookings (client_name, client_email, service_type, booking_date, notes) VALUES (?, ?, ?, ?, ?)");
                 $insert_stmt->execute([$client_name, $client_email, $service_type, $booking_date, $notes]);
-                
-                $message = "Session date reserved for $booking_date!";
+
+                $message = "Shoot date successfully reserved for $booking_date!";
                 $message_type = "success";
                 $booked_dates[] = $booking_date;
             }
         } else {
-            $message = "Demo Mode: Date $booking_date captured.";
+            $message = "Demo Mode: Reserved for $booking_date (No DB connection)";
             $message_type = "success";
             $booked_dates[] = $booking_date;
         }
@@ -104,44 +119,61 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $studio_name ?> — <?= $tagline ?></title>
-    
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.min.js"></script>
-
     <style>
         :root {
-            --bg-black: #040404;
-            --bg-card: rgba(18, 18, 20, 0.7);
+            --bg-black: #050505;
+            --bg-card: #0d0d0d;
+            --bg-card-hover: #121212;
             --accent-gold: #e2b13c;
-            --accent-gold-glow: rgba(226, 177, 60, 0.35);
-            --text-main: #f5f5f7;
-            --text-muted: #999999;
-            --border-line: rgba(255, 255, 255, 0.1);
-            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            --accent-gold-soft: rgba(226, 177, 60, 0.15);
+            --text-main: #f4f4f4;
+            --text-muted: #8a8a8a;
+            --border-line: rgba(255, 255, 255, 0.10);
+            --border-line-strong: rgba(255, 255, 255, 0.22);
+            --font-display: 'Bebas Neue', 'Inter', sans-serif;
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Courier New', Courier, monospace;
+            --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            scroll-behavior: smooth;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
 
         body {
             background-color: var(--bg-black);
             color: var(--text-main);
-            overflow-x: hidden;
+            font-family: var(--font-body);
             line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::selection { background: var(--accent-gold); color: #000; }
+
+        /* subtle full-page grain for a filmic finish */
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.035;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
         /* HEADER */
@@ -149,25 +181,35 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(4, 4, 4, 0.85);
-            backdrop-filter: blur(16px);
+            background: rgba(5, 5, 5, 0.7);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             border-bottom: 1px solid var(--border-line);
             z-index: 1000;
+            transition: background 0.4s var(--ease-smooth), border-color 0.4s var(--ease-smooth), padding 0.4s var(--ease-smooth);
+        }
+
+        header.scrolled {
+            background: rgba(5, 5, 5, 0.92);
+            border-color: var(--border-line-strong);
         }
 
         nav {
-            max-width: 1350px;
+            max-width: 1320px;
             margin: auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 22px 30px;
+            transition: padding 0.4s var(--ease-smooth);
         }
 
+        header.scrolled nav { padding: 15px 30px; }
+
         .logo {
-            font-size: 20px;
-            font-weight: 900;
-            letter-spacing: 4px;
+            font-family: var(--font-display);
+            font-size: 24px;
+            letter-spacing: 3px;
             color: #fff;
             text-transform: uppercase;
         }
@@ -177,127 +219,270 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         nav ul {
             display: flex;
             list-style: none;
-            gap: 35px;
+            gap: 34px;
         }
 
         nav a {
+            position: relative;
             color: var(--text-muted);
             text-decoration: none;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 2.5px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            transition: color 0.3s ease;
+            transition: color 0.3s;
+            padding-bottom: 4px;
         }
 
-        nav a:hover { color: var(--accent-gold); }
+        nav a::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent-gold);
+            transition: width 0.35s var(--ease-smooth);
+        }
 
-        /* HERO WITH 3D INTERACTIVE OBJECT */
+        nav a:hover { color: #fff; }
+        nav a:hover::after { width: 100%; }
+
+        .nav-cta {
+            display: none;
+        }
+
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .menu-toggle span {
+            width: 24px;
+            height: 2px;
+            background: #fff;
+            transition: transform 0.3s var(--ease-smooth), opacity 0.3s;
+        }
+
+        /* HERO */
         #hero-wrapper {
             position: relative;
             width: 100%;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-end;
+            padding-bottom: 90px;
             overflow: hidden;
-            background: radial-gradient(circle at 70% 50%, rgba(226, 177, 60, 0.08) 0%, transparent 60%);
         }
 
-        #three-canvas {
+        #hero-canvas {
             position: absolute;
-            top: 0;
-            right: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
             z-index: 1;
+            display: block;
+            cursor: grab;
+        }
+
+        .hero-vignette {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(5,5,5,0.55) 100%);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(5, 5, 5, 0.05) 0%,
+                rgba(5, 5, 5, 0.55) 65%,
+                rgba(5, 5, 5, 1) 100%
+            );
+            z-index: 2;
             pointer-events: none;
         }
 
-        .hero-container {
+        #hero {
             position: relative;
-            z-index: 2;
-            max-width: 1350px;
+            z-index: 3;
+            max-width: 1320px;
             margin: auto;
             width: 100%;
             padding: 0 30px;
-            pointer-events: auto;
+            pointer-events: none;
         }
 
+        #hero a { pointer-events: auto; }
+
         .hero-text {
-            max-width: 650px;
-            animation: fadeIn 1.2s ease forwards;
+            animation: fadeInUp 1.2s var(--ease-smooth) forwards;
+            opacity: 0;
+            animation-delay: 0.15s;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         .lens-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             font-family: var(--font-mono);
             font-size: 12px;
             color: var(--accent-gold);
-            letter-spacing: 4px;
-            margin-bottom: 20px;
+            letter-spacing: 3px;
+            margin-bottom: 18px;
             text-transform: uppercase;
-            display: inline-block;
-            background: rgba(226, 177, 60, 0.1);
-            padding: 6px 14px;
-            border-radius: 4px;
-            border: 1px solid rgba(226, 177, 60, 0.2);
+        }
+
+        .lens-tag .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #ff4d4d;
+            animation: recPulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes recPulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,77,77,0.5); }
+            50% { opacity: 0.3; box-shadow: 0 0 0 5px rgba(255,77,77,0); }
         }
 
         .hero-text h1 {
-            font-size: clamp(48px, 7vw, 88px);
-            font-weight: 900;
-            line-height: 0.95;
-            letter-spacing: -2px;
+            font-family: var(--font-display);
+            font-size: clamp(52px, 9vw, 108px);
+            font-weight: 400;
+            line-height: 0.92;
+            letter-spacing: 1px;
             text-transform: uppercase;
-            margin-bottom: 25px;
-            background: linear-gradient(180deg, #ffffff 0%, #a1a1a1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            margin-bottom: 28px;
         }
 
         .hero-text p {
+            max-width: 560px;
             font-size: 18px;
-            color: var(--text-muted);
-            margin-bottom: 40px;
-            max-width: 520px;
+            font-weight: 400;
+            color: #cfd2d6;
+            margin-bottom: 38px;
         }
 
-        .btn-gold {
-            display: inline-block;
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
             background: var(--accent-gold);
             color: #000;
-            padding: 18px 36px;
-            font-weight: 800;
+            padding: 17px 34px;
+            font-weight: 700;
             text-decoration: none;
             text-transform: uppercase;
             letter-spacing: 2px;
             font-size: 13px;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px var(--accent-gold-glow);
+            border-radius: 2px;
+            transition: transform 0.4s var(--ease-smooth), background 0.4s, box-shadow 0.4s;
+            box-shadow: 0 0 0 rgba(226,177,60,0);
         }
 
-        .btn-gold:hover {
+        .hero-cta:hover {
             background: #fff;
             transform: translateY(-3px);
-            box-shadow: 0 15px 35px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 14px 34px rgba(226,177,60,0.25);
         }
 
-        /* MARQUEE TICKER */
+        .hero-cta-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 18px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border-line-strong);
+            padding-bottom: 4px;
+            transition: border-color 0.3s, color 0.3s;
+        }
+
+        .hero-cta-secondary:hover { color: var(--accent-gold); border-color: var(--accent-gold); }
+
+        .scroll-cue {
+            position: absolute;
+            bottom: 26px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .scroll-cue .line {
+            width: 1px;
+            height: 34px;
+            background: linear-gradient(to bottom, var(--accent-gold), transparent);
+            animation: scrollDown 1.8s ease-in-out infinite;
+        }
+
+        .flash-hint {
+            position: absolute;
+            top: 100px;
+            right: 30px;
+            z-index: 3;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .flash-hint { display: none; }
+        }
+
+        @keyframes scrollDown {
+            0% { transform: scaleY(0); transform-origin: top; opacity: 1; }
+            50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
+            51% { transform-origin: bottom; }
+            100% { transform: scaleY(0); transform-origin: bottom; opacity: 0.4; }
+        }
+
+        /* MARQUEE */
         .marquee-container {
             position: relative;
-            z-index: 5;
+            z-index: 4;
             width: 100%;
             overflow: hidden;
-            background: var(--bg-black);
+            background: var(--bg-card);
             border-top: 1px solid var(--border-line);
             border-bottom: 1px solid var(--border-line);
-            padding: 20px 0;
+            padding: 18px 0;
             white-space: nowrap;
         }
 
         .marquee-content {
             display: inline-block;
-            animation: marquee 30s linear infinite;
+            animation: marquee 28s linear infinite;
         }
 
         .marquee-content span {
@@ -305,7 +490,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             font-size: 13px;
             letter-spacing: 4px;
             color: var(--text-muted);
-            margin-right: 60px;
+            margin-right: 50px;
             text-transform: uppercase;
         }
 
@@ -316,26 +501,35 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             100% { transform: translateX(-50%); }
         }
 
-        /* SECTIONS & GRID SYSTEM */
+        /* SECTIONS */
         section {
-            max-width: 1350px;
+            max-width: 1320px;
             margin: auto;
-            padding: 120px 30px;
+            padding: 130px 30px;
         }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(36px);
+            transition: opacity 0.9s var(--ease-smooth), transform 0.9s var(--ease-smooth);
+        }
+
+        .reveal.is-visible { opacity: 1; transform: translateY(0); }
 
         .section-hdr {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-bottom: 60px;
+            margin-bottom: 64px;
             border-bottom: 1px solid var(--border-line);
-            padding-bottom: 25px;
+            padding-bottom: 22px;
         }
 
         .section-hdr h2 {
-            font-size: 38px;
-            font-weight: 900;
-            letter-spacing: -1px;
+            font-family: var(--font-display);
+            font-size: 44px;
+            font-weight: 400;
+            letter-spacing: 1px;
             text-transform: uppercase;
         }
 
@@ -343,70 +537,129 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             font-family: var(--font-mono);
             color: var(--accent-gold);
             font-size: 12px;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
 
-        /* REELS / CARDS */
-        .grid-3 {
+        /* REELS */
+        .reels-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 35px;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 42px;
         }
 
-        .card {
+        .reel-card {
             background: var(--bg-card);
             border: 1px solid var(--border-line);
-            border-radius: 8px;
             overflow: hidden;
-            backdrop-filter: blur(12px);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            position: relative;
+            border-radius: 3px;
+            transition: border-color 0.4s var(--ease-smooth), transform 0.5s var(--ease-smooth), box-shadow 0.5s var(--ease-smooth);
         }
 
-        .card:hover {
+        .reel-card:hover {
             border-color: var(--accent-gold);
-            transform: translateY(-8px);
+            transform: translateY(-6px);
+            box-shadow: 0 24px 48px rgba(0,0,0,0.45);
         }
 
-        .card-img {
+        .reel-media {
+            position: relative;
             width: 100%;
-            height: 400px;
-            object-fit: cover;
-            filter: grayscale(20%);
-            transition: filter 0.5s ease, transform 0.5s ease;
+            height: 480px;
+            overflow: hidden;
+            background: #000;
         }
 
-        .card:hover .card-img {
+        .reel-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(30%);
+            transition: filter 0.6s var(--ease-smooth), transform 0.7s var(--ease-smooth);
+        }
+
+        .reel-card:hover .reel-video {
             filter: grayscale(0%);
             transform: scale(1.05);
         }
 
-        .card-body { padding: 30px; }
-
-        .card-meta {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--accent-gold);
-            margin-bottom: 10px;
-            letter-spacing: 2px;
+        .reel-meta {
+            padding: 26px;
+            position: relative;
+            z-index: 4;
         }
 
-        .card-body h3 {
-            font-size: 22px;
-            font-weight: 800;
+        .reel-meta .cam-specs {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--accent-gold);
+            margin-bottom: 10px;
+        }
+
+        .reel-meta h3 {
+            font-family: var(--font-display);
+            font-size: 26px;
             letter-spacing: 1px;
             text-transform: uppercase;
-            margin-bottom: 8px;
+        }
+
+        /* SERVICES */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .service-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            padding: 42px;
+            border-radius: 3px;
+            transition: border-color 0.4s var(--ease-smooth), transform 0.4s var(--ease-smooth), background 0.4s;
+        }
+
+        .service-box:hover {
+            border-color: var(--accent-gold);
+            background: var(--bg-card-hover);
+            transform: translateY(-4px);
+        }
+
+        .service-box .badge {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--accent-gold);
+            margin-bottom: 22px;
+            display: block;
+        }
+
+        .service-box h3 {
+            font-family: var(--font-display);
+            font-size: 26px;
+            margin-bottom: 14px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .service-box p {
+            color: var(--text-muted);
+            font-size: 15px;
         }
 
         /* BOOKING FORM */
-        .booking-box {
+        .booking-wrapper {
             background: var(--bg-card);
             border: 1px solid var(--border-line);
-            border-radius: 12px;
             padding: 60px;
-            max-width: 800px;
+            max-width: 820px;
             margin: auto;
-            backdrop-filter: blur(16px);
+            border-radius: 3px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
 
         .form-group { margin-bottom: 25px; }
@@ -424,17 +677,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         input, select, textarea {
             width: 100%;
             padding: 16px;
-            background: rgba(0, 0, 0, 0.6);
+            background: #000;
             border: 1px solid var(--border-line);
-            border-radius: 6px;
             color: #fff;
             font-size: 15px;
+            font-family: var(--font-body);
             outline: none;
-            transition: border-color 0.3s ease;
+            border-radius: 2px;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
         input:focus, select:focus, textarea:focus {
             border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(226,177,60,0.12);
         }
 
         .btn-submit {
@@ -443,36 +698,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             font-weight: 800;
             letter-spacing: 2px;
             text-transform: uppercase;
-            padding: 20px;
+            padding: 18px;
             width: 100%;
             border: none;
-            border-radius: 6px;
+            border-radius: 2px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: background 0.3s, transform 0.3s var(--ease-smooth);
         }
 
-        .btn-submit:hover { background: #fff; }
+        .btn-submit:hover { background: #fff; transform: translateY(-2px); }
 
         .alert {
             padding: 15px;
             font-family: var(--font-mono);
             font-size: 13px;
             margin-bottom: 25px;
-            border-radius: 6px;
             text-align: center;
+            border-radius: 2px;
         }
         .alert-success { background: rgba(226, 177, 60, 0.15); color: var(--accent-gold); border: 1px solid var(--accent-gold); }
         .alert-error { background: rgba(255, 0, 0, 0.15); color: #ff5555; border: 1px solid #ff5555; }
 
-        /* FLOATING WHATSAPP BUTTON */
+        /* WHATSAPP */
         .whatsapp-float {
             position: fixed;
             bottom: 30px;
             right: 30px;
             background: #25d366;
             color: #fff;
-            width: 60px;
-            height: 60px;
+            width: 58px;
+            height: 58px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -480,57 +735,80 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             z-index: 1000;
             text-decoration: none;
-            transition: transform 0.3s ease;
+            transition: transform 0.35s var(--ease-smooth), box-shadow 0.35s;
         }
 
-        .whatsapp-float:hover { transform: scale(1.12); }
+        .whatsapp-float:hover { transform: scale(1.1); box-shadow: 0 14px 32px rgba(0,0,0,0.6); }
 
         footer {
             border-top: 1px solid var(--border-line);
-            padding: 50px 30px;
+            padding: 60px 30px 40px;
             text-align: center;
+        }
+
+        footer .footer-logo {
+            font-family: var(--font-display);
+            font-size: 22px;
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+        }
+
+        footer .footer-logo span { color: var(--accent-gold); }
+
+        footer p {
             font-family: var(--font-mono);
             font-size: 12px;
             color: var(--text-muted);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        @media (max-width: 900px) {
+            nav ul { display: none; }
+            .menu-toggle { display: flex; }
+            .form-row { grid-template-columns: 1fr; }
         }
 
-        @media (max-width: 992px) {
-            #three-canvas { opacity: 0.3; }
-            nav ul { display: none; }
-            .booking-box { padding: 30px; }
+        @media (max-width: 768px) {
+            .reels-grid { grid-template-columns: 1fr; }
+            .booking-wrapper { padding: 30px; }
+            section { padding: 90px 22px; }
+            .section-hdr { flex-direction: column; align-items: flex-start; gap: 10px; }
         }
     </style>
 </head>
 <body>
 
-<header>
+<header id="site-header">
     <nav>
         <div class="logo"><?= $studio_name ?><span>.</span></div>
         <ul>
-            <li><a href="#hero-wrapper">Studio</a></li>
+            <li><a href="#hero-wrapper">Film</a></li>
             <li><a href="#reels">Reels</a></li>
             <li><a href="#services">Services</a></li>
             <li><a href="#booking">Reserve</a></li>
         </ul>
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
     </nav>
 </header>
 
 <div id="hero-wrapper">
-    <div id="three-canvas"></div>
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-vignette"></div>
+    <div class="hero-overlay"></div>
 
-    <div class="hero-container">
+    <div id="hero">
         <div class="hero-text">
-            <span class="lens-tag">3D CINEMATOGRAPHY EXPERIENCE</span>
-            <h1>CRAFTING<br>MOTION PICTURES.</h1>
-            <p>We direct, light, and cut your story like high-end cinema. Studio based at Bole Medhanialem, working worldwide.</p>
-            <a href="#booking" class="btn-gold">Reserve Production</a>
+            <div class="lens-tag"><span class="dot"></span>NOW SHOWING · FEATURED FILM STUDIO</div>
+            <h1>YOUR DAY.<br>IN MOTION.</h1>
+            <p>We don't just record the day — we direct it, light it, and cut it like cinema. Based at Bole Medhanialem, working across Ethiopia.</p>
+            <a href="#booking" class="hero-cta">Book Date</a>
+            <a href="#reels" class="hero-cta-secondary">Watch Reels</a>
         </div>
     </div>
+
+    <div class="scroll-cue"><span>Scroll</span><span class="line"></span></div>
+    <div class="flash-hint">Click anywhere to fire the shutter</div>
 </div>
 
 <div class="marquee-container">
@@ -544,17 +822,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </div>
 
 <section id="reels">
-    <div class="section-hdr">
-        <h2>FEATURED REELS</h2>
-        <p>DIRECTED BY AD PICTURES</p>
+    <div class="section-hdr reveal">
+        <h2>Recent Reels</h2>
+        <p>DIRECTED & CUT BY AD PICTURES</p>
     </div>
 
-    <div class="grid-3">
+    <div class="reels-grid">
         <?php foreach ($reels as $r): ?>
-            <div class="card">
-                <img src="<?= $r['image'] ?>" class="card-img" alt="<?= $r['title'] ?>">
-                <div class="card-body">
-                    <div class="card-meta"><?= $r['meta'] ?></div>
+            <div class="reel-card reveal">
+                <div class="reel-media">
+                    <video class="reel-video" src="<?= $r['video'] ?>" poster="<?= $r['image'] ?>" autoplay muted loop playsinline preload="metadata"></video>
+                </div>
+                <div class="reel-meta">
+                    <div class="cam-specs"><?= $r['meta'] ?></div>
                     <h3><?= $r['title'] ?></h3>
                     <p style="color: var(--text-muted); font-size: 14px;"><?= $r['type'] ?></p>
                 </div>
@@ -564,61 +844,63 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </section>
 
 <section id="services">
-    <div class="section-hdr">
-        <h2>PRODUCTION SERVICES</h2>
-        <p>PACKAGES & SPECS</p>
+    <div class="section-hdr reveal">
+        <h2>Services</h2>
+        <p>PRODUCTION PACKAGES</p>
     </div>
 
-    <div class="grid-3">
+    <div class="services-grid">
         <?php foreach ($services as $s): ?>
-            <div class="card card-body">
-                <div class="card-meta"><?= $s['badge'] ?></div>
+            <div class="service-box reveal">
+                <span class="badge"><?= $s['badge'] ?></span>
                 <h3><?= $s['title'] ?></h3>
-                <p style="color: var(--text-muted); font-size: 14px; margin-top: 10px;"><?= $s['description'] ?></p>
+                <p><?= $s['description'] ?></p>
             </div>
         <?php endforeach; ?>
     </div>
 </section>
 
 <section id="booking">
-    <div class="section-hdr">
-        <h2>RESERVE SHOOT DATE</h2>
-        <p>DOUBLE-BOOKING PROTECTION</p>
+    <div class="section-hdr reveal">
+        <h2>Reserve Shoot</h2>
+        <p>DOUBLE-BOOKING GUARD ACTIVE</p>
     </div>
 
-    <div class="booking-box">
+    <div class="booking-wrapper reveal">
         <?php if ($message): ?>
             <div class="alert alert-<?= $message_type ?>"><?= $message ?></div>
         <?php endif; ?>
 
         <form method="POST" action="#booking">
-            <div class="form-group">
-                <label>FULL NAME</label>
-                <input type="text" name="name" placeholder="Enter full name" required>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>FULL NAME</label>
+                    <input type="text" name="name" placeholder="Name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>EMAIL ADDRESS</label>
+                    <input type="email" name="email" placeholder="Email" required>
+                </div>
             </div>
 
             <div class="form-group">
-                <label>EMAIL ADDRESS</label>
-                <input type="email" name="email" placeholder="Enter email address" required>
-            </div>
-
-            <div class="form-group">
-                <label>PRODUCTION SERVICE</label>
+                <label>SERVICE</label>
                 <select name="service">
                     <option>Cinematic Wedding Films</option>
-                    <option>Commercial & Brand Stills</option>
+                    <option>Commercial & Stills</option>
                     <option>Event & Mels Coverage</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label>SHOOT DATE (RESERVED GREYED OUT)</label>
-                <input type="text" id="datepicker" name="date" placeholder="Select date..." required readonly>
+                <label>SHOOT DATE (UNAVAILABLE DATES GREYED OUT)</label>
+                <input type="text" id="datepicker" name="date" placeholder="Select Available Date..." required readonly>
             </div>
 
             <div class="form-group">
-                <label>PRODUCTION NOTES</label>
-                <textarea name="notes" rows="4" placeholder="Venue & production requirements..."></textarea>
+                <label>NOTES / VENUE DETAILS</label>
+                <textarea name="notes" rows="4" placeholder="Event venue and details..."></textarea>
             </div>
 
             <button type="submit" class="btn-submit">Confirm Reservation</button>
@@ -626,20 +908,275 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </div>
 </section>
 
-<a href="https://wa.me/<?= $whatsapp ?>?text=Hello%20AD%20Pictures," class="whatsapp-float" target="_blank">
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.758.459 3.474 1.33 4.988l-1.416 5.171 5.293-1.389c1.458.796 3.102 1.216 4.78 1.217h.004c5.507 0 9.99-4.478 9.99-9.985 0-2.667-1.037-5.176-2.922-7.062-1.886-1.886-4.394-2.924-7.069-2.924zm5.814 14.182c-.252.707-1.473 1.353-2.023 1.411-.518.055-1.196.082-3.418-.838-2.589-1.072-4.228-3.732-4.357-3.905-.129-.173-1.053-1.401-1.053-2.667 0-1.267.662-1.889.897-2.146.235-.257.514-.322.686-.322.172 0 .344.002.493.009.157.007.368-.06.576.438.214.512.729 1.777.793 1.906.064.129.107.279.021.451-.086.172-.129.279-.257.429-.129.15-.271.335-.387.45-.129.129-.264.27-.114.528.15.257.666 1.098 1.428 1.777.98.874 1.806 1.146 2.064 1.275.257.129.408.107.558-.064.15-.172.643-.75.814-1.007.172-.257.343-.214.579-.129.236.086 1.499.707 1.756.836.257.129.429.193.493.301.064.108.064.621-.188 1.328z"/></svg>
+<a href="https://wa.me/<?= $whatsapp ?>?text=Hello%20AD%20Pictures,%20I%20want%20to%20inquire%20about%20a%20film%20shoot." class="whatsapp-float" target="_blank" aria-label="WhatsApp">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.758.459 3.474 1.33 4.988l-1.416 5.171 5.293-1.389c1.458.796 3.102 1.216 4.78 1.217h.004c5.507 0 9.99-4.478 9.99-9.985 0-2.667-1.037-5.176-2.922-7.062-1.886-1.886-4.394-2.924-7.069-2.924zm5.814 14.182c-.252.707-1.473 1.353-2.023 1.411-.518.055-1.196.082-3.418-.838-2.589-1.072-4.228-3.732-4.357-3.905-.129-.173-1.053-1.401-1.053-2.667 0-1.267.662-1.889.897-2.146.235-.257.514-.322.686-.322.172 0 .344.002.493.009.157.007.368-.06.576.438.214.512.729 1.777.793 1.906.064.129.107.279.021.451-.086.172-.129.279-.257.429-.129.15-.271.335-.387.45-.129.129-.264.27-.114.528.15.257.666 1.098 1.428 1.777.98.874 1.806 1.146 2.064 1.275.257.129.408.107.558-.064.15-.172.643-.75.814-1.007.172-.257.343-.214.579-.129.236.086 1.499.707 1.756.836.257.129.429.193.493.301.064.108.064.621-.188 1.328z"/></svg>
 </a>
 
 <footer>
-    <p>&copy; <?= date('Y') ?> <?= $studio_name ?> FILM STUDIO · LOCATION: <?= $location ?> · TEL: <?= $phone ?></p>
+    <div class="footer-logo"><?= $studio_name ?><span>.</span></div>
+    <p>&copy; <?= date('Y') ?> <?= $studio_name ?> FILM STUDIO · STUDIO: <?= $location ?> · TEL: <?= $phone ?></p>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
 <script>
+// ============================================
+// HERO: 3D DSLR-style camera that idles with a
+// gentle turntable spin and turns/tilts to follow
+// the mouse cursor like it's tracking the viewer,
+// set inside a drifting gold particle field. Click
+// anywhere in the hero to fire the shutter/flash.
+// ============================================
+(function () {
+    const canvas = document.getElementById('hero-canvas');
+    if (!canvas || typeof THREE === 'undefined') return;
+
+    const heroWrapper = document.getElementById('hero-wrapper');
+
+    const scene = new THREE.Scene();
+    const cam3d = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    cam3d.position.set(0, 0, 46);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // ---- Lighting: warm key light + cool rim light for a cinematic metal/matte look ----
+    const ambient = new THREE.AmbientLight(0x404040, 1.5);
+    scene.add(ambient);
+
+    const keyLight = new THREE.PointLight(0xe2b13c, 2.4, 300);
+    keyLight.position.set(30, 24, 40);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.PointLight(0x6f8bff, 1.2, 300);
+    rimLight.position.set(-30, -10, -25);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.55);
+    fillLight.position.set(0, 30, 20);
+    scene.add(fillLight);
+
+    // ---- Materials ----
+    const bodyMaterial = new THREE.MeshStandardMaterial({
+        color: 0x141414,
+        metalness: 0.55,
+        roughness: 0.38
+    });
+
+    const goldMaterial = new THREE.MeshStandardMaterial({
+        color: 0xe2b13c,
+        metalness: 0.9,
+        roughness: 0.25,
+        emissive: 0x3a2a08,
+        emissiveIntensity: 0.15
+    });
+
+    const glassMaterial = new THREE.MeshStandardMaterial({
+        color: 0x0a0f14,
+        metalness: 0.2,
+        roughness: 0.05,
+        emissive: 0x0d1a26,
+        emissiveIntensity: 0.4
+    });
+
+    const flashMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xffffff,
+        emissiveIntensity: 0.05,
+        metalness: 0.1,
+        roughness: 0.3
+    });
+
+    // ---- Build a procedural DSLR camera ----
+    const cameraGroup = new THREE.Group();
+
+    // Main body block
+    const body = new THREE.Mesh(new THREE.BoxGeometry(14, 8.5, 5.5), bodyMaterial);
+    cameraGroup.add(body);
+
+    // Front grip bump (right side, slightly forward)
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(3, 8.5, 6.2), bodyMaterial);
+    grip.position.set(6.8, -0.4, 0.3);
+    cameraGroup.add(grip);
+
+    // Top viewfinder hump (pentaprism), centered
+    const hump = new THREE.Mesh(new THREE.BoxGeometry(5.2, 2.6, 4.6), bodyMaterial);
+    hump.position.set(-0.5, 5.3, 0);
+    cameraGroup.add(hump);
+
+    const humpTop = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.8, 1.6, 5), bodyMaterial);
+    humpTop.position.set(-0.5, 6.9, 0);
+    humpTop.rotation.y = Math.PI / 5;
+    cameraGroup.add(humpTop);
+
+    // Hot-shoe on top of the hump
+    const hotShoe = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.4, 1.6), goldMaterial);
+    hotShoe.position.set(-0.5, 7.75, 0);
+    cameraGroup.add(hotShoe);
+
+    // Lens mount ring (gold accent) on the front face
+    const mountRing = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.35, 20, 48), goldMaterial);
+    mountRing.position.set(-1.2, -0.3, 2.9);
+    cameraGroup.add(mountRing);
+
+    // Lens barrel, built from a few stacked cylinders for a zoom-lens look
+    const lensGroup = new THREE.Group();
+    const barrel1 = new THREE.Mesh(new THREE.CylinderGeometry(3.0, 3.0, 3.2, 40), bodyMaterial);
+    barrel1.rotation.x = Math.PI / 2;
+    barrel1.position.z = 1.7;
+    lensGroup.add(barrel1);
+
+    const barrel2 = new THREE.Mesh(new THREE.CylinderGeometry(2.7, 2.7, 3.6, 40), bodyMaterial);
+    barrel2.rotation.x = Math.PI / 2;
+    barrel2.position.z = 4.6;
+    lensGroup.add(barrel2);
+
+    const focusRing = new THREE.Mesh(new THREE.CylinderGeometry(2.85, 2.85, 0.6, 40), goldMaterial);
+    focusRing.rotation.x = Math.PI / 2;
+    focusRing.position.z = 3.5;
+    lensGroup.add(focusRing);
+
+    const lensGlass = new THREE.Mesh(new THREE.CircleGeometry(2.3, 40), glassMaterial);
+    lensGlass.position.z = 6.4;
+    lensGroup.add(lensGlass);
+
+    const lensRim = new THREE.Mesh(new THREE.TorusGeometry(2.45, 0.22, 16, 40), goldMaterial);
+    lensRim.position.z = 6.4;
+    lensGroup.add(lensRim);
+
+    lensGroup.position.set(-1.2, -0.3, 2.8);
+    cameraGroup.add(lensGroup);
+
+    // Flash unit, small box popped up on the left of the hump
+    const flash = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.2, 2.4), flashMaterial);
+    flash.position.set(-4.6, 5.0, 1.6);
+    cameraGroup.add(flash);
+
+    // Shutter button + dial on top right
+    const shutterButton = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.35, 24), goldMaterial);
+    shutterButton.position.set(6.4, 4.5, 1.2);
+    cameraGroup.add(shutterButton);
+
+    const modeDial = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.5, 28), bodyMaterial);
+    modeDial.position.set(4.2, 4.5, 1.2);
+    cameraGroup.add(modeDial);
+
+    // Strap lugs, one each side
+    [-7.3, 7.3].forEach(function (x) {
+        const lug = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.18, 10, 20), goldMaterial);
+        lug.position.set(x, 3.2, -1.5);
+        lug.rotation.y = Math.PI / 2;
+        cameraGroup.add(lug);
+    });
+
+    // Brand plate accent on the front
+    const platePlate = new THREE.Mesh(new THREE.BoxGeometry(4, 0.5, 0.15), goldMaterial);
+    platePlate.position.set(-0.5, 1.6, 2.85);
+    cameraGroup.add(platePlate);
+
+    cameraGroup.rotation.y = -0.5;
+    cameraGroup.scale.set(1.05, 1.05, 1.05);
+    scene.add(cameraGroup);
+
+    // ---- A dedicated point light "flash" that pulses when triggered ----
+    const flashLight = new THREE.PointLight(0xffffff, 0, 200);
+    flashLight.position.set(-4.6, 5.0, 10);
+    scene.add(flashLight);
+    let flashTimer = 0;
+
+    function triggerFlash() {
+        flashTimer = 1;
+    }
+    heroWrapper.addEventListener('click', triggerFlash);
+
+    // ---- Ambient particle dust for depth behind/around the camera ----
+    const PARTICLE_COUNT = 900;
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+        positions[i * 3]     = (Math.random() - 0.5) * 220;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 140;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 160 - 40;
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({
+        size: 0.8,
+        color: 0xe2b13c,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    // ---- Mouse tracking: the camera turns to "look" toward the cursor ----
+    let mouseX = 0, mouseY = 0;
+    let targetRotY = -0.5, targetRotX = 0;
+
+    function onPointerMove(clientX, clientY) {
+        const rect = heroWrapper.getBoundingClientRect();
+        mouseX = ((clientX - rect.left) / rect.width) * 2 - 1;
+        mouseY = ((clientY - rect.top) / rect.height) * 2 - 1;
+        targetRotY = -0.5 + mouseX * 0.75;
+        targetRotX = -mouseY * 0.35;
+    }
+
+    window.addEventListener('mousemove', function (e) { onPointerMove(e.clientX, e.clientY); });
+    window.addEventListener('touchmove', function (e) {
+        if (e.touches && e.touches[0]) onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    function onResize() {
+        cam3d.aspect = window.innerWidth / window.innerHeight;
+        cam3d.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    window.addEventListener('resize', onResize);
+
+    const clock = new THREE.Clock();
+    let idleSpin = 0;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const dt = clock.getDelta();
+        const elapsed = clock.getElapsedTime();
+
+        // Slow idle turntable drift layered under the mouse-tracking turn
+        idleSpin += dt * 0.08;
+
+        cameraGroup.rotation.y += ((targetRotY + Math.sin(idleSpin) * 0.15) - cameraGroup.rotation.y) * 0.06;
+        cameraGroup.rotation.x += (targetRotX - cameraGroup.rotation.x) * 0.06;
+
+        // Slight bob for life-like drift
+        cameraGroup.position.y = Math.sin(elapsed * 0.6) * 1.0;
+
+        // 3D camera (the viewer's viewpoint) drifts subtly with the cursor for parallax depth
+        cam3d.position.x += (mouseX * 6 - cam3d.position.x) * 0.03;
+        cam3d.position.y += (-mouseY * 4 - cam3d.position.y) * 0.03;
+        cam3d.lookAt(cameraGroup.position);
+
+        particles.rotation.y = elapsed * 0.015;
+
+        // Shutter flash decay
+        if (flashTimer > 0) {
+            flashTimer -= dt * 2.5;
+            flashLight.intensity = Math.max(0, flashTimer) * 6;
+        }
+
+        renderer.render(scene, cam3d);
+    }
+    animate();
+})();
+
+// ============================================
+// UI polish: header shrink on scroll, mobile menu,
+// scroll-reveal for sections/cards, datepicker.
+// ============================================
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. Flatpickr Initializer
     const unavailableDates = <?= json_encode($booked_dates) ?>;
+
     flatpickr("#datepicker", {
         dateFormat: "Y-m-d",
         minDate: "today",
@@ -647,118 +1184,34 @@ document.addEventListener("DOMContentLoaded", function () {
         locale: { firstDayOfWeek: 1 }
     });
 
-    // 2. Three.js 3D Cinema Reel Engine Setup
-    const container = document.getElementById('three-canvas');
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 12;
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
-
-    // Group to hold 3D Reel Assembly
-    const filmGroup = new THREE.Group();
-
-    // Metallic Materials
-    const goldMaterial = new THREE.MeshStandardMaterial({
-        color: 0xe2b13c,
-        metalness: 0.9,
-        roughness: 0.2
+    // Header background/size shifts once the page scrolls
+    const header = document.getElementById('site-header');
+    window.addEventListener('scroll', function () {
+        header.classList.toggle('scrolled', window.scrollY > 40);
     });
 
-    const darkMetal = new THREE.MeshStandardMaterial({
-        color: 0x111113,
-        metalness: 0.8,
-        roughness: 0.3
-    });
-
-    const filmStripMaterial = new THREE.MeshStandardMaterial({
-        color: 0x050505,
-        roughness: 0.8
-    });
-
-    // Outer Film Reel Cylinder Rim
-    const outerRimGeo = new THREE.CylinderGeometry(3.5, 3.5, 0.4, 64, 1, true);
-    const outerRim = new THREE.Mesh(outerRimGeo, goldMaterial);
-    filmGroup.add(outerRim);
-
-    // Inner Core Hub
-    const coreGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.42, 32);
-    const coreHub = new THREE.Mesh(coreGeo, darkMetal);
-    filmGroup.add(coreHub);
-
-    // Film Tape Coil (Middle Layer)
-    const tapeGeo = new THREE.CylinderGeometry(3.0, 3.0, 0.38, 64);
-    const tape = new THREE.Mesh(tapeGeo, filmStripMaterial);
-    filmGroup.add(tape);
-
-    // 6-Spoke Cinema Reel Pattern
-    for (let i = 0; i < 6; i++) {
-        const spokeGeo = new THREE.BoxGeometry(0.25, 3.4, 0.45);
-        const spoke = new THREE.Mesh(spokeGeo, goldMaterial);
-        spoke.rotation.z = (Math.PI / 3) * i;
-        filmGroup.add(spoke);
+    // Mobile nav toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const navList = document.querySelector('nav ul');
+    if (menuToggle && navList) {
+        menuToggle.addEventListener('click', function () {
+            const open = navList.style.display === 'flex';
+            navList.style.display = open ? 'none' : 'flex';
+            navList.style.cssText += open ? '' : 'position:fixed;top:64px;left:0;right:0;background:rgba(5,5,5,0.97);flex-direction:column;padding:24px 30px;gap:20px;border-bottom:1px solid rgba(255,255,255,0.1);';
+        });
     }
 
-    // Position Group in Hero right side
-    filmGroup.position.set(window.innerWidth > 992 ? 3.2 : 0, 0, 0);
-    scene.add(filmGroup);
-
-    // Lighting Setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-    scene.add(ambientLight);
-
-    const pointLight = new THREE.PointLight(0xe2b13c, 2.5, 50);
-    pointLight.position.set(5, 5, 8);
-    scene.add(pointLight);
-
-    const blueLight = new THREE.PointLight(0x2563eb, 1.2, 50);
-    blueLight.position.set(-8, -5, 5);
-    scene.add(blueLight);
-
-    // Mouse Cursor Movement Interactivity
-    let targetX = 0;
-    let targetY = 0;
-    let mouseX = 0;
-    let mouseY = 0;
-
-    const windowHalfX = window.innerWidth / 2;
-    const windowHalfY = window.innerHeight / 2;
-
-    document.addEventListener('mousemove', (event) => {
-        mouseX = (event.clientX - windowHalfX);
-        mouseY = (event.clientY - windowHalfY);
-    });
-
-    // Render Animation Loop
-    function animate() {
-        requestAnimationFrame(animate);
-
-        // Continuous Smooth Rotation
-        filmGroup.rotation.y += 0.008;
-
-        // Smooth Mouse Rotation Tracking (Lerp)
-        targetX = mouseX * 0.0008;
-        targetY = mouseY * 0.0008;
-
-        filmGroup.rotation.x += (targetY - filmGroup.rotation.x) * 0.05;
-        filmGroup.rotation.z += (-targetX - filmGroup.rotation.z) * 0.05;
-
-        renderer.render(scene, camera);
-    }
-
-    animate();
-
-    // Window Resize Handler
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        filmGroup.position.set(window.innerWidth > 992 ? 3.2 : 0, 0, 0);
-    });
+    // Scroll-reveal for section headers and cards
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+    revealEls.forEach(function (el) { observer.observe(el); });
 });
 </script>
 
