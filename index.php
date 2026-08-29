@@ -273,10 +273,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             justify-content: space-between;
             gap: 40px;
             padding-top: 140px;
+            max-width: 100%;
+            margin: 0;
+            padding-left: 30px;
+            padding-right: 30px;
+            background: linear-gradient(rgba(9, 13, 22, 0.5), rgba(9, 13, 22, 0.6)), 
+                        url('https://images.unsplash.com/photo-1537904904737-13fc7e91a072?w=1600&h=900&fit=crop') center/cover no-repeat fixed;
+            background-attachment: fixed;
+            position: relative;
+            overflow: hidden;
         }
 
         .hero-text {
             flex: 1;
+            position: relative;
+            z-index: 2;
         }
 
         .hero-text h1 {
@@ -669,6 +680,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             #hero {
                 flex-direction: column;
                 text-align: center;
+                background-attachment: scroll;
+                padding-top: 100px;
             }
 
             .btn-secondary {
