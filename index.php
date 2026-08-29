@@ -15,77 +15,63 @@ $options = [
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
-// Studio Data
-$studio_name = "Photo Luqas Studio";
-$tagline     = "Professional Photo & Video Home Studio";
-$phone       = "+251 900 000 000";
-$location    = "Kaffa Bonga , Ethiopia";
+// Studio Data - AD Pictures Aesthetic
+$studio_name = "AD PICTURES";
+$tagline     = "Wedding & Cinematic Film Studio";
+$phone       = "+251 908 030 809";
+$whatsapp    = "251908030809";
+$location    = "Awlo Business Center, 3rd Floor, Bole Medhanialem, Addis Ababa";
 
 $services = [
     [
-        "title"       => "Portrait & Headshots",
-        "price"       => "Br 1,500 / session",
-        "description" => "High-end creative portraits with customized backdrop lighting setups."
+        "badge"       => "4K · 24FPS · T2.1",
+        "title"       => "Cinematic Wedding Films",
+        "price"       => "Full Day Coverage",
+        "description" => "Directed, lit, and cut like a film — from the first look to the evening celebration."
     ],
     [
-        "title"       => "Product Photography",
-        "price"       => "Br 2,000 / batch",
-        "description" => "Clean, high-resolution product photography optimized for e-commerce and social ads."
+        "badge"       => "50mm · f/1.4 · HDR",
+        "title"       => "Commercial & Stills",
+        "price"       => "Brand Stills & Video",
+        "description" => "Product campaigns and commercial film built to capture and hold audience attention."
     ],
     [
-        "title"       => "Content Creator Studio Rental",
-        "price"       => "Br 800 / hour",
-        "description" => "Full studio space access with softboxes, RGB accent lights, ring lights, and background panels."
+        "badge"       => "RAW · 35mm · 60FPS",
+        "title"       => "Event & Mels Coverage",
+        "price"       => "Multi-Day Packages",
+        "description" => "High-energy multi-cam event recording with continuous mood lighting rigs."
     ]
 ];
 
-$gallery_items = [
+$reels = [
     [
-        "id" => 1, "category" => "portraits", "title" => "Neon Glow Portrait",
-        "caption" => "Dual-tone RGB softbox setup with dark velvet backdrop.",
-        "image" => "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80"
+        "id" => 1, "category" => "wedding", "meta" => "4K · 24FPS · T2.1", "title" => "THE VOW",
+        "type" => "Wedding Film", "image" => "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80"
     ],
     [
-        "id" => 2, "category" => "products", "title" => "Luxury Watch Showcase",
-        "caption" => "Macro product shot utilizing continuous LED ring lighting.",
-        "image" => "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=80"
+        "id" => 2, "category" => "event", "meta" => "4K · 24FPS · T2.8", "title" => "GRAND ENTRANCE",
+        "type" => "Event Film", "image" => "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80"
     ],
     [
-        "id" => 3, "category" => "studio", "title" => "Pro Lighting Setup",
-        "caption" => "Home studio floor plan with double softbox diffusers and boom arm.",
-        "image" => "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1200&q=80"
+        "id" => 3, "category" => "wedding", "meta" => "4K · 24FPS · T2.1", "title" => "MELS NIGHT",
+        "type" => "Cultural Wedding", "image" => "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=80"
     ],
     [
-        "id" => 4, "category" => "portraits", "title" => "Minimalist Headshot",
-        "caption" => "High-key studio lighting with seamless white backdrop.",
-        "image" => "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1200&q=80"
-    ],
-    [
-        "id" => 5, "category" => "products", "title" => "Skincare Brand Ad",
-        "caption" => "E-commerce flat-lay presentation with natural diffusion fill.",
-        "image" => "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=80"
-    ],
-    [
-        "id" => 6, "category" => "studio", "title" => "RGB Ambient Rig",
-        "caption" => "Customizable mood lighting configurations for video podcasts and streams.",
-        "image" => "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80"
+        "id" => 4, "category" => "portrait", "meta" => "50mm · f/1.2 · ISO 100", "title" => "NIGHT WALK",
+        "type" => "Cinematic Portrait", "image" => "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80"
     ]
 ];
 
-// Backend Processing & Fetching Reserved Dates
+// Database Fetching & Double Booking Logic
 $message = "";
 $message_type = "";
 $booked_dates = [];
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
-
-    // Fetch existing booked dates
     $stmt = $pdo->query("SELECT booking_date FROM bookings");
     $booked_dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
 } catch (\PDOException $e) {
-    // Fallback demo dates if DB isn't connected yet
     $booked_dates = ["2026-09-05", "2026-09-12"];
 }
 
@@ -98,28 +84,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if ($client_name && $client_email && $booking_date) {
         if (isset($pdo)) {
-            // Check double booking server-side
             $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM bookings WHERE booking_date = ?");
             $check_stmt->execute([$booking_date]);
 
             if ($check_stmt->fetchColumn() > 0) {
-                $message = "The selected date ($booking_date) was just reserved. Please pick another date.";
+                $message = "Date ($booking_date) is reserved. Please pick another date.";
                 $message_type = "error";
             } else {
                 $insert_stmt = $pdo->prepare("INSERT INTO bookings (client_name, client_email, service_type, booking_date, notes) VALUES (?, ?, ?, ?, ?)");
                 $insert_stmt->execute([$client_name, $client_email, $service_type, $booking_date, $notes]);
                 
-                $message = "Session successfully booked for $booking_date!";
+                $message = "Shoot date successfully reserved for $booking_date!";
                 $message_type = "success";
                 $booked_dates[] = $booking_date;
             }
         } else {
-            $message = "Demo mode: Form submitted for $booking_date (Database not connected).";
+            $message = "Demo Mode: Reserved for $booking_date (No DB connection)";
             $message_type = "success";
             $booked_dates[] = $booking_date;
         }
     } else {
-        $message = "Please fill in all required fields accurately.";
+        $message = "Please complete all required fields.";
         $message_type = "error";
     }
 }
@@ -130,483 +115,371 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $studio_name ?> | <?= $tagline ?></title>
+    <title><?= $studio_name ?> — <?= $tagline ?></title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
 
     <style>
         :root {
-            --bg-dark: #090d16;
-            --bg-card: #121929;
-            --accent-gold: #f59e0b;
-            --accent-blue: #2563eb;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border-line: rgba(255, 255, 255, 0.1);
+            --bg-black: #050505;
+            --bg-card: #0d0d0d;
+            --accent-gold: #e2b13c;
+            --text-main: #f0f0f0;
+            --text-muted: #888888;
+            --border-line: rgba(255, 255, 255, 0.12);
+            --font-mono: 'Courier New', Courier, monospace;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            background-color: var(--bg-dark);
+            background-color: var(--bg-black);
             color: var(--text-main);
-            line-height: 1.6;
+            line-height: 1.5;
+            overflow-x: hidden;
         }
 
+        /* HEADER */
         header {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(9, 13, 22, 0.85);
+            background: rgba(5, 5, 5, 0.85);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-line);
             z-index: 1000;
         }
 
         nav {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 30px;
+            padding: 22px 30px;
         }
 
         .logo {
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: 1px;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 3px;
             color: #fff;
+            text-transform: uppercase;
         }
 
-        .logo span {
-            color: var(--accent-gold);
-        }
+        .logo span { color: var(--accent-gold); }
 
         nav ul {
             display: flex;
             list-style: none;
-            gap: 25px;
+            gap: 30px;
         }
 
         nav a {
             color: var(--text-muted);
             text-decoration: none;
+            font-size: 13px;
             font-weight: 600;
-            transition: color 0.3s;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: 0.3s;
         }
 
-        nav a:hover {
-            color: var(--accent-gold);
-        }
+        nav a:hover { color: #fff; }
 
-        /* HERO SECTION WITH CAMERA SHUTTER & LENS BACKGROUND */
+        /* CINEMATIC HERO */
         #hero-wrapper {
             position: relative;
             width: 100%;
-            min-height: 92vh;
+            min-height: 100vh;
             background: linear-gradient(
-                to right,
-                rgba(9, 13, 22, 0.95) 0%,
-                rgba(9, 13, 22, 0.8) 50%,
-                rgba(9, 13, 22, 0.6) 100%
-                /* https://lightroom-photoshop-tutorials.com/wp-content/uploads/2021/09/Best-Mirrorless-Cameras-for-Professional-Photographers.webp */
-                
-            ), url('https://tse1.mm.bing.net/th/id/OIP.egzcAi6opQIa86Gb1bGOUAHaEO?r=0&w=1792&h=1024&rs=1&pid=ImgDetMain&o=7&rm=3') center/cover no-repeat;
+                to bottom,
+                rgba(5, 5, 5, 0.4) 0%,
+                rgba(5, 5, 5, 0.95) 100%
+            ), url('https://lightroom-photoshop-tutorials.com/wp-content/uploads/2021/09/Best-Mirrorless-Cameras-for-Professional-Photographers.webp') center/cover no-repeat;
             display: flex;
-            align-items: center;
+            align-items: flex-end;
+            padding-bottom: 80px;
         }
 
         #hero {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: auto;
             width: 100%;
-            padding: 140px 30px 80px;
+            padding: 0 30px;
         }
 
-        .hero-text {
-            max-width: 650px;
+        .lens-tag {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--accent-gold);
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
         }
 
         .hero-text h1 {
-            font-size: clamp(40px, 6vw, 64px);
-            line-height: 1.1;
-            margin-bottom: 20px;
-            color: #ffffff;
-            font-weight: 800;
-        }
-
-        .hero-text h1 span {
-            background: linear-gradient(135deg, #fff, var(--accent-gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: clamp(48px, 8vw, 90px);
+            font-weight: 900;
+            line-height: 0.95;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            margin-bottom: 25px;
         }
 
         .hero-text p {
-            font-size: 19px;
-            color: #d1d5db;
+            max-width: 550px;
+            font-size: 18px;
+            color: var(--text-muted);
             margin-bottom: 35px;
         }
 
-        section {
-            max-width: 1200px;
-            margin: auto;
-            padding: 90px 30px;
+        /* TICKER / MARQUEE */
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            background: var(--bg-card);
+            border-y: 1px solid var(--border-line);
+            padding: 18px 0;
+            white-space: nowrap;
         }
 
-        .btn {
+        .marquee-content {
             display: inline-block;
-            padding: 14px 28px;
-            border-radius: 8px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: 0.3s;
-            cursor: pointer;
-            border: none;
+            animation: marquee 25s linear infinite;
         }
 
-        .btn-primary {
-            background: var(--accent-gold);
-            color: #000;
+        .marquee-content span {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: var(--text-muted);
+            margin-right: 50px;
+            text-transform: uppercase;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+        .marquee-content span strong { color: var(--accent-gold); }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
         }
 
-        .btn-secondary {
-            background: rgba(18, 25, 41, 0.85);
-            color: #fff;
-            border: 1px solid var(--border-line);
-            margin-left: 10px;
-            backdrop-filter: blur(5px);
+        /* SECTIONS */
+        section {
+            max-width: 1300px;
+            margin: auto;
+            padding: 120px 30px;
         }
 
-        .btn-secondary:hover {
-            border-color: var(--accent-gold);
+        .section-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 60px;
+            border-bottom: 1px solid var(--border-line);
+            padding-bottom: 20px;
+        }
+
+        .section-hdr h2 {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .section-hdr p {
+            font-family: var(--font-mono);
             color: var(--accent-gold);
+            font-size: 13px;
         }
 
-        /* SECTION HEADINGS */
-        .section-title {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-
-        .section-title h2 {
-            font-size: 36px;
-            margin-bottom: 10px;
-        }
-
-        /* SERVICES GRID */
-        .grid {
+        /* REELS / GALLERY */
+        .reels-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 40px;
+        }
+
+        .reel-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .reel-img {
+            width: 100%;
+            height: 480px;
+            object-fit: cover;
+            filter: grayscale(30%);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reel-card:hover .reel-img {
+            filter: grayscale(0%);
+            transform: scale(1.04);
+        }
+
+        .reel-meta {
+            padding: 25px;
+        }
+
+        .reel-meta .cam-specs {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--accent-gold);
+            margin-bottom: 8px;
+        }
+
+        .reel-meta h3 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* SERVICES */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 30px;
         }
 
-        .card {
+        .service-box {
             background: var(--bg-card);
             border: 1px solid var(--border-line);
-            border-radius: 12px;
-            padding: 30px;
-            transition: transform 0.3s ease;
+            padding: 40px;
+            transition: 0.3s;
         }
 
-        .card:hover {
-            transform: translateY(-8px);
+        .service-box:hover {
             border-color: var(--accent-gold);
         }
 
-        .card h3 {
-            font-size: 22px;
-            margin-bottom: 10px;
-        }
-
-        .price-badge {
-            display: inline-block;
-            background: rgba(245, 158, 11, 0.15);
+        .service-box .badge {
+            font-family: var(--font-mono);
+            font-size: 12px;
             color: var(--accent-gold);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            display: block;
         }
 
-        /* GALLERY SECTION */
-        .filter-bar {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 35px;
-            flex-wrap: wrap;
+        .service-box h3 {
+            font-size: 24px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
         }
 
-        .filter-btn {
-            background: var(--bg-card);
-            border: 1px solid var(--border-line);
-            color: var(--text-muted);
-            padding: 8px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .filter-btn:hover, .filter-btn.active {
-            background: var(--accent-gold);
-            color: #000;
-            border-color: var(--accent-gold);
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 25px;
-        }
-
-        .gallery-item {
-            position: relative;
-            border-radius: 12px;
-            overflow: hidden;
-            background: var(--bg-card);
-            border: 1px solid var(--border-line);
-            cursor: pointer;
-            aspect-ratio: 4/3;
-        }
-
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-
-        .gallery-item:hover img {
-            transform: scale(1.08);
-        }
-
-        .gallery-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(9, 13, 22, 0.95), rgba(9, 13, 22, 0.2));
-            opacity: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 20px;
-            transition: opacity 0.3s ease;
-        }
-
-        .gallery-item:hover .gallery-overlay {
-            opacity: 1;
-        }
-
-        .gallery-overlay h4 {
-            font-size: 20px;
-            color: #fff;
-        }
-
-        .gallery-overlay p {
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
-        /* LIGHTBOX POPUP MODAL */
-        .lightbox-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(9, 13, 22, 0.8);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            padding: 20px;
-        }
-
-        .lightbox-modal.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .lightbox-content {
-            background: rgba(18, 25, 41, 0.95);
-            border: 1px solid var(--border-line);
-            border-radius: 16px;
-            max-width: 900px;
-            width: 100%;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .lightbox-img-wrapper {
-            position: relative;
-            width: 100%;
-            max-height: 550px;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .lightbox-img-wrapper img {
-            max-width: 100%;
-            max-height: 550px;
-            object-fit: contain;
-        }
-
-        .lightbox-meta {
-            padding: 20px 25px;
-            background: var(--bg-card);
-        }
-
-        .lightbox-meta h3 {
-            font-size: 22px;
-            margin-bottom: 5px;
-        }
-
-        .lightbox-meta p {
+        .service-box p {
             color: var(--text-muted);
             font-size: 15px;
         }
 
-        .lightbox-close {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 30px;
-            color: #fff;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .lightbox-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            color: #fff;
-            border: 1px solid var(--border-line);
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s;
-        }
-
-        .lightbox-nav:hover {
-            background: var(--accent-gold);
-            color: #000;
-        }
-
-        .lightbox-prev { left: 15px; }
-        .lightbox-next { right: 15px; }
-
         /* BOOKING FORM */
-        .form-container {
+        .booking-wrapper {
             background: var(--bg-card);
             border: 1px solid var(--border-line);
-            padding: 40px;
-            border-radius: 16px;
-            max-width: 700px;
+            padding: 60px;
+            max-width: 800px;
             margin: auto;
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+        .form-group { margin-bottom: 25px; }
 
         label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
         }
 
         input, select, textarea {
             width: 100%;
-            padding: 14px;
-            background: #0b101d;
+            padding: 16px;
+            background: #000;
             border: 1px solid var(--border-line);
-            border-radius: 8px;
-            color: white;
-            font-size: 16px;
+            color: #fff;
+            font-size: 15px;
             outline: none;
+            transition: 0.3s;
         }
 
         input:focus, select:focus, textarea:focus {
             border-color: var(--accent-gold);
         }
 
+        .btn-submit {
+            background: var(--accent-gold);
+            color: #000;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: #fff;
+        }
+
         .alert {
             padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            margin-bottom: 25px;
             text-align: center;
         }
+        .alert-success { background: rgba(226, 177, 60, 0.15); color: var(--accent-gold); border: 1px solid var(--accent-gold); }
+        .alert-error { background: rgba(255, 0, 0, 0.15); color: #ff5555; border: 1px solid #ff5555; }
 
-        .alert-success {
-            background: rgba(16, 185, 129, 0.2);
-            border: 1px solid #10b981;
-            color: #34d399;
+        /* FLOATING WHATSAPP BUTTON */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #25d366;
+            color: #fff;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 1000;
+            text-decoration: none;
+            transition: transform 0.3s;
         }
 
-        .alert-error {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid #ef4444;
-            color: #f87171;
-        }
+        .whatsapp-float:hover { transform: scale(1.1); }
 
         footer {
             border-top: 1px solid var(--border-line);
-            padding: 30px;
+            padding: 50px 30px;
             text-align: center;
+            font-family: var(--font-mono);
+            font-size: 12px;
             color: var(--text-muted);
-            font-size: 14px;
         }
 
         @media (max-width: 768px) {
-            #hero-wrapper {
-                background: linear-gradient(
-                    to bottom,
-                    rgba(9, 13, 22, 0.95) 0%,
-                    rgba(9, 13, 22, 0.85) 100%
-                ), url('https://lightroom-photoshop-tutorials.com/wp-content/uploads/2021/09/Best-Mirrorless-Cameras-for-Professional-Photographers.webp') center/cover no-repeat;
-            }
-
-            .hero-text {
-                text-align: center;
-            }
-
-            .btn-secondary {
-                margin-left: 0;
-                margin-top: 15px;
-            }
-
-            nav ul {
-                display: none;
-            }
+            nav ul { display: none; }
+            .reels-grid { grid-template-columns: 1fr; }
+            .booking-wrapper { padding: 30px; }
         }
     </style>
 </head>
@@ -616,237 +489,136 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <nav>
         <div class="logo"><?= $studio_name ?><span>.</span></div>
         <ul>
-            <li><a href="#hero-wrapper">Home</a></li>
+            <li><a href="#hero-wrapper">Film</a></li>
+            <li><a href="#reels">Reels</a></li>
             <li><a href="#services">Services</a></li>
-            <li><a href="#gallery">Showcase</a></li>
-            <li><a href="#booking">Book Studio</a></li>
+            <li><a href="#booking">Reserve</a></li>
         </ul>
     </nav>
 </header>
 
 <div id="hero-wrapper">
     <div id="hero">
+        <div class="lens-tag">NOW SHOWING · FEATURED FILM STUDIO</div>
         <div class="hero-text">
-            <h1>Precision Gear. <span>Pro Results.</span></h1>
-            <p><?= $tagline ?>. Equipped with high-end mirrorless cameras, continuous softbox lighting, and custom backdrops.</p>
-            <a href="#booking" class="btn btn-primary">Book Studio Session</a>
-            <a href="#gallery" class="btn btn-secondary">Explore Showcase</a>
+            <h1>YOUR DAY.<br>IN MOTION.</h1>
+            <p>We don't just record the day — we direct it, light it, and cut it like cinema. Based at Bole Medhanialem, working across Ethiopia.</p>
+            <a href="#booking" style="display:inline-block; background: var(--accent-gold); color: #000; padding: 16px 32px; font-weight:800; text-decoration:none; text-transform:uppercase; letter-spacing:2px; font-size:13px;">Book Date</a>
         </div>
     </div>
 </div>
 
-<section id="services">
-    <div class="section-title">
-        <h2>Our Offerings</h2>
-        <p style="color: var(--text-muted);">Choose a photography service or rent the complete studio setup</p>
+<div class="marquee-container">
+    <div class="marquee-content">
+        <span>THINK · <strong>IMAGINE</strong> · CREATE</span>
+        <span>4K CINEMATOGRAPHY · <strong>24FPS</strong></span>
+        <span>AWLO BUSINESS CENTER · <strong>BOLE MEDHANIALEM</strong></span>
+        <span>THINK · <strong>IMAGINE</strong> · CREATE</span>
+        <span>4K CINEMATOGRAPHY · <strong>24FPS</strong></span>
+    </div>
+</div>
+
+<section id="reels">
+    <div class="section-hdr">
+        <h2>RECENT REELS</h2>
+        <p>DIRECTED & CUT BY AD PICTURES</p>
     </div>
 
-    <div class="grid">
-        <?php foreach ($services as $s): ?>
-            <div class="card">
-                <h3><?= htmlspecialchars($s["title"]) ?></h3>
-                <span class="price-badge"><?= htmlspecialchars($s["price"]) ?></span>
-                <p style="color: var(--text-muted);"><?= htmlspecialchars($s["description"]) ?></p>
-            </div>
-        <?php endforeach; ?>
-    </div>
-</section>
-
-<section id="gallery">
-    <div class="section-title">
-        <h2>Studio Showcase</h2>
-        <p style="color: var(--text-muted);">Explore sample photo shoots and lighting setups</p>
-    </div>
-
-    <div class="filter-bar">
-        <button class="filter-btn active" data-filter="all">All Items</button>
-        <button class="filter-btn" data-filter="portraits">Portraits</button>
-        <button class="filter-btn" data-filter="products">Product Ads</button>
-        <button class="filter-btn" data-filter="studio">Studio Setup</button>
-    </div>
-
-    <div class="gallery-grid">
-        <?php foreach ($gallery_items as $index => $item): ?>
-            <div class="gallery-item" 
-                 data-category="<?= $item['category'] ?>" 
-                 data-index="<?= $index ?>"
-                 data-title="<?= htmlspecialchars($item['title']) ?>"
-                 data-caption="<?= htmlspecialchars($item['caption']) ?>"
-                 data-src="<?= $item['image'] ?>">
-                <img src="<?= $item['image'] ?>" alt="<?= htmlspecialchars($item['title']) ?>" loading="lazy">
-                <div class="gallery-overlay">
-                    <h4><?= htmlspecialchars($item['title']) ?></h4>
-                    <p><?= htmlspecialchars($item['caption']) ?></p>
+    <div class="reels-grid">
+        <?php foreach ($reels as $r): ?>
+            <div class="reel-card">
+                <img src="<?= $r['image'] ?>" class="reel-img" alt="<?= $r['title'] ?>">
+                <div class="reel-meta">
+                    <div class="cam-specs"><?= $r['meta'] ?></div>
+                    <h3><?= $r['title'] ?></h3>
+                    <p style="color: var(--text-muted); font-size: 14px;"><?= $r['type'] ?></p>
                 </div>
             </div>
         <?php endforeach; ?>
     </div>
 </section>
 
-<section id="booking">
-    <div class="section-title">
-        <h2>Book A Session</h2>
-        <p style="color: var(--text-muted);">Reserve studio time (Unavailable dates are grayed out automatically)</p>
+<section id="services">
+    <div class="section-hdr">
+        <h2>SERVICES</h2>
+        <p>PRODUCTION PACKAGES</p>
     </div>
 
-    <div class="form-container">
-        <?php if ($message): ?>
-            <div class="alert alert-<?= $message_type ?>">
-                <?= htmlspecialchars($message) ?>
+    <div class="services-grid">
+        <?php foreach ($services as $s): ?>
+            <div class="service-box">
+                <span class="badge"><?= $s['badge'] ?></span>
+                <h3><?= $s['title'] ?></h3>
+                <p><?= $s['description'] ?></p>
             </div>
+        <?php endforeach; ?>
+    </div>
+</section>
+
+<section id="booking">
+    <div class="section-hdr">
+        <h2>RESERVE SHOOT</h2>
+        <p>DOUBLE-BOOKING GUARD ACTIVE</p>
+    </div>
+
+    <div class="booking-wrapper">
+        <?php if ($message): ?>
+            <div class="alert alert-<?= $message_type ?>"><?= $message ?></div>
         <?php endif; ?>
 
         <form method="POST" action="#booking">
             <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" name="name" placeholder="Your name" required>
+                <label>FULL NAME</label>
+                <input type="text" name="name" placeholder="Name" required>
             </div>
 
             <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" name="email" placeholder="yourname@example.com" required>
+                <label>EMAIL ADDRESS</label>
+                <input type="email" name="email" placeholder="Email" required>
             </div>
 
             <div class="form-group">
-                <label>Select Service</label>
+                <label>SERVICE</label>
                 <select name="service">
-                    <option>Portrait & Headshots</option>
-                    <option>Product Photography</option>
-                    <option>Studio Space Rental</option>
+                    <option>Cinematic Wedding Films</option>
+                    <option>Commercial & Stills</option>
+                    <option>Event & Mels Coverage</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label>Select Date</label>
-                <input type="text" id="datepicker" name="date" placeholder="Click to choose an available date..." required readonly>
+                <label>SHOOT DATE (UNAVAILABLE DATES GREYED OUT)</label>
+                <input type="text" id="datepicker" name="date" placeholder="Select Available Date..." required readonly>
             </div>
 
             <div class="form-group">
-                <label>Additional Notes / Details</label>
-                <textarea name="notes" rows="4" placeholder="Tell us about your shoot requirements..."></textarea>
+                <label>NOTES / VENUE DETAILS</label>
+                <textarea name="notes" rows="4" placeholder="Event venue and details..."></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Confirm Reservation</button>
+            <button type="submit" class="btn-submit">Confirm Reservation</button>
         </form>
     </div>
 </section>
 
-<div class="lightbox-modal" id="lightbox">
-    <div class="lightbox-content">
-        <button class="lightbox-close" id="lightboxClose">&times;</button>
-        <button class="lightbox-nav lightbox-prev" id="lightboxPrev">&#10094;</button>
-        <button class="lightbox-nav lightbox-next" id="lightboxNext">&#10095;</button>
-        
-        <div class="lightbox-img-wrapper">
-            <img id="lightboxImg" src="" alt="Gallery Image">
-        </div>
-        
-        <div class="lightbox-meta">
-            <h3 id="lightboxTitle"></h3>
-            <p id="lightboxCaption"></p>
-        </div>
-    </div>
-</div>
+<a href="https://wa.me/<?= $whatsapp ?>?text=Hello%20AD%20Pictures,%20I%20want%20to%20inquire%20about%20a%20film%20shoot." class="whatsapp-float" target="_blank" aria-label="WhatsApp">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.758.459 3.474 1.33 4.988l-1.416 5.171 5.293-1.389c1.458.796 3.102 1.216 4.78 1.217h.004c5.507 0 9.99-4.478 9.99-9.985 0-2.667-1.037-5.176-2.922-7.062-1.886-1.886-4.394-2.924-7.069-2.924zm5.814 14.182c-.252.707-1.473 1.353-2.023 1.411-.518.055-1.196.082-3.418-.838-2.589-1.072-4.228-3.732-4.357-3.905-.129-.173-1.053-1.401-1.053-2.667 0-1.267.662-1.889.897-2.146.235-.257.514-.322.686-.322.172 0 .344.002.493.009.157.007.368-.06.576.438.214.512.729 1.777.793 1.906.064.129.107.279.021.451-.086.172-.129.279-.257.429-.129.15-.271.335-.387.45-.129.129-.264.27-.114.528.15.257.666 1.098 1.428 1.777.98.874 1.806 1.146 2.064 1.275.257.129.408.107.558-.064.15-.172.643-.75.814-1.007.172-.257.343-.214.579-.129.236.086 1.499.707 1.756.836.257.129.429.193.493.301.064.108.064.621-.188 1.328z"/></svg>
+</a>
 
 <footer>
-    <p>&copy; <?= date('Y') ?> <?= $studio_name ?>. Located in <?= $location ?>. Contact: <?= $phone ?></p>
+    <p>&copy; <?= date('Y') ?> <?= $studio_name ?> FILM STUDIO · STUDIO: <?= $location ?> · TEL: <?= $phone ?></p>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. Double-Booking Prevention Datepicker
     const unavailableDates = <?= json_encode($booked_dates) ?>;
 
     flatpickr("#datepicker", {
         dateFormat: "Y-m-d",
         minDate: "today",
         disable: unavailableDates,
-        locale: {
-            firstDayOfWeek: 1
-        }
-    });
-
-    // 2. Gallery Filter Logic
-    const filterBtns = document.querySelectorAll(".filter-btn");
-    const galleryItems = document.querySelectorAll(".gallery-item");
-
-    filterBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            filterBtns.forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-
-            const filter = btn.dataset.filter;
-
-            galleryItems.forEach(item => {
-                if (filter === "all" || item.dataset.category === filter) {
-                    item.style.display = "block";
-                } else {
-                    item.style.display = "none";
-                }
-            });
-        });
-    });
-
-    // 3. Lightbox Gallery Popup Logic
-    const lightbox = document.getElementById("lightbox");
-    const lightboxImg = document.getElementById("lightboxImg");
-    const lightboxTitle = document.getElementById("lightboxTitle");
-    const lightboxCaption = document.getElementById("lightboxCaption");
-    const closeBtn = document.getElementById("lightboxClose");
-    const prevBtn = document.getElementById("lightboxPrev");
-    const nextBtn = document.getElementById("lightboxNext");
-
-    let visibleItems = [];
-    let currentIndex = 0;
-
-    function updateVisibleItems() {
-        visibleItems = Array.from(galleryItems).filter(item => item.style.display !== "none");
-    }
-
-    function openLightbox(element) {
-        updateVisibleItems();
-        currentIndex = visibleItems.indexOf(element);
-        showImage(currentIndex);
-        lightbox.classList.add("active");
-    }
-
-    function showImage(index) {
-        if (visibleItems.length === 0) return;
-        const item = visibleItems[index];
-        lightboxImg.src = item.dataset.src;
-        lightboxTitle.textContent = item.dataset.title;
-        lightboxCaption.textContent = item.dataset.caption;
-    }
-
-    galleryItems.forEach(item => {
-        item.addEventListener("click", () => openLightbox(item));
-    });
-
-    closeBtn.addEventListener("click", () => {
-        lightbox.classList.remove("active");
-    });
-
-    lightbox.addEventListener("click", (e) => {
-        if (e.target === lightbox) lightbox.classList.remove("active");
-    });
-
-    prevBtn.addEventListener("click", () => {
-        currentIndex = (currentIndex - 1 + visibleItems.length) % visibleItems.length;
-        showImage(currentIndex);
-    });
-
-    nextBtn.addEventListener("click", () => {
-        currentIndex = (currentIndex + 1) % visibleItems.length;
-        showImage(currentIndex);
-    });
-
-    document.addEventListener("keydown", (e) => {
-        if (!lightbox.classList.contains("active")) return;
-        if (e.key === "Escape") lightbox.classList.remove("active");
-        if (e.key === "ArrowLeft") prevBtn.click();
-        if (e.key === "ArrowRight") nextBtn.click();
+        locale: { firstDayOfWeek: 1 }
     });
 });
 </script>
