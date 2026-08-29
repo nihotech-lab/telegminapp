@@ -206,17 +206,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             color: var(--accent-gold);
         }
 
-        /* HERO SECTION WITH BACKGROUND IMAGE */
+        /* HERO SECTION WITH CAMERA SHUTTER & LENS BACKGROUND */
         #hero-wrapper {
             position: relative;
             width: 100%;
-            min-height: 90vh;
+            min-height: 92vh;
             background: linear-gradient(
                 to right,
                 rgba(9, 13, 22, 0.95) 0%,
-                rgba(9, 13, 22, 0.75) 50%,
-                rgba(9, 13, 22, 0.5) 100%
-            ), url('https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+                rgba(9, 13, 22, 0.8) 50%,
+                rgba(9, 13, 22, 0.6) 100%
+            ), url('https://lightroom-photoshop-tutorials.com/wp-content/uploads/2021/09/Best-Mirrorless-Cameras-for-Professional-Photographers.webp') center/cover no-repeat;
             display: flex;
             align-items: center;
         }
@@ -280,7 +280,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         .btn-secondary {
-            background: rgba(18, 25, 41, 0.8);
+            background: rgba(18, 25, 41, 0.85);
             color: #fff;
             border: 1px solid var(--border-line);
             margin-left: 10px;
@@ -590,7 +590,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     to bottom,
                     rgba(9, 13, 22, 0.95) 0%,
                     rgba(9, 13, 22, 0.85) 100%
-                ), url('https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat;
+                ), url('https://lightroom-photoshop-tutorials.com/wp-content/uploads/2021/09/Best-Mirrorless-Cameras-for-Professional-Photographers.webp') center/cover no-repeat;
             }
 
             .hero-text {
@@ -625,8 +625,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <div id="hero-wrapper">
     <div id="hero">
         <div class="hero-text">
-            <h1>Capture Studio Perfection <span>Right At Home</span></h1>
-            <p><?= $tagline ?>. Fully equipped with softboxes, background panels, RGB continuous accent lights, and high-resolution gear.</p>
+            <h1>Precision Gear. <span>Pro Results.</span></h1>
+            <p><?= $tagline ?>. Equipped with high-end mirrorless cameras, continuous softbox lighting, and custom backdrops.</p>
             <a href="#booking" class="btn btn-primary">Book Studio Session</a>
             <a href="#gallery" class="btn btn-secondary">Explore Showcase</a>
         </div>
