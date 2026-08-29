@@ -43,22 +43,32 @@ $services = [
     ]
 ];
 
+// Each reel now carries both a poster image AND a preview video clip.
+// Hovering (or tapping on mobile) crossfades from poster -> looping muted video.
 $reels = [
     [
         "id" => 1, "category" => "wedding", "meta" => "4K · 24FPS · T2.1", "title" => "THE VOW",
-        "type" => "Wedding Film", "image" => "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80"
+        "type" => "Wedding Film",
+        "image" => "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80",
+        "video" => "https://assets.mixkit.co/videos/preview/mixkit-bride-and-groom-having-fun-on-a-jetty-40188-large.mp4"
     ],
     [
         "id" => 2, "category" => "event", "meta" => "4K · 24FPS · T2.8", "title" => "GRAND ENTRANCE",
-        "type" => "Event Film", "image" => "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80"
+        "type" => "Event Film",
+        "image" => "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80",
+        "video" => "https://assets.mixkit.co/videos/preview/mixkit-people-dancing-at-a-party-1230-large.mp4"
     ],
     [
         "id" => 3, "category" => "wedding", "meta" => "4K · 24FPS · T2.1", "title" => "MELS NIGHT",
-        "type" => "Cultural Wedding", "image" => "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=80"
+        "type" => "Cultural Wedding",
+        "image" => "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=80",
+        "video" => "https://assets.mixkit.co/videos/preview/mixkit-traditional-dancers-performing-at-a-festival-4640-large.mp4"
     ],
     [
         "id" => 4, "category" => "portrait", "meta" => "50mm · f/1.2 · ISO 100", "title" => "NIGHT WALK",
-        "type" => "Cinematic Portrait", "image" => "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80"
+        "type" => "Cinematic Portrait",
+        "image" => "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80",
+        "video" => "https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-woman-walking-at-night-34561-large.mp4"
     ]
 ];
 
@@ -93,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             } else {
                 $insert_stmt = $pdo->prepare("INSERT INTO bookings (client_name, client_email, service_type, booking_date, notes) VALUES (?, ?, ?, ?, ?)");
                 $insert_stmt->execute([$client_name, $client_email, $service_type, $booking_date, $notes]);
-                
+
                 $message = "Shoot date successfully reserved for $booking_date!";
                 $message_type = "success";
                 $booked_dates[] = $booking_date;
@@ -116,7 +126,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $studio_name ?> — <?= $tagline ?></title>
-    
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
 
@@ -213,9 +223,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             width: auto;
             height: auto;
             z-index: 1;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) scale(1.02);
             object-fit: cover;
             filter: brightness(0.6) contrast(1.1);
+            animation: heroZoom 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes heroZoom {
+            0%   { transform: translate(-50%, -50%) scale(1.02); }
+            100% { transform: translate(-50%, -50%) scale(1.12); }
         }
 
         .hero-overlay {
@@ -228,6 +244,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 rgba(5, 5, 5, 1) 100%
             );
             z-index: 2;
+        }
+
+        /* subtle animated film-grain / scanline texture for a modern cinematic feel */
+        .hero-scanlines {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255,255,255,0.02) 0px,
+                rgba(255,255,255,0.02) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            mix-blend-mode: overlay;
+            opacity: 0.5;
         }
 
         #hero {
@@ -260,6 +293,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             text-transform: uppercase;
         }
 
+        .lens-tag::before {
+            content: "● ";
+            color: #ff4d4d;
+            animation: recPulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes recPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
         .hero-text h1 {
             font-size: clamp(48px, 8vw, 90px);
             font-weight: 900;
@@ -274,6 +318,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             font-size: 18px;
             color: #d1d5db;
             margin-bottom: 35px;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--accent-gold);
+            color: #000;
+            padding: 16px 32px;
+            font-weight: 800;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 13px;
+            transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), background 0.35s;
+        }
+
+        .hero-cta:hover {
+            background: #fff;
+            transform: translateX(6px);
         }
 
         /* TICKER / MARQUEE */
@@ -339,7 +403,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             font-size: 13px;
         }
 
-        /* REELS / GALLERY */
+        /* REELS / GALLERY — now video-preview players instead of static images */
         .reels-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -352,23 +416,86 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             overflow: hidden;
             cursor: pointer;
             position: relative;
+            transition: border-color 0.4s ease;
         }
 
-        .reel-img {
+        .reel-card:hover { border-color: var(--accent-gold); }
+
+        .reel-media {
+            position: relative;
             width: 100%;
             height: 480px;
-            object-fit: cover;
-            filter: grayscale(30%);
-            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+            background: #000;
         }
 
-        .reel-card:hover .reel-img {
-            filter: grayscale(0%);
-            transform: scale(1.04);
+        .reel-poster,
+        .reel-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .reel-poster {
+            filter: grayscale(35%) brightness(0.95);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2;
+        }
+
+        .reel-video {
+            opacity: 0;
+            transform: scale(1.06);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1;
+        }
+
+        .reel-card.is-playing .reel-poster {
+            opacity: 0;
+            transform: scale(1.08);
+        }
+
+        .reel-card.is-playing .reel-video {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .reel-card:hover .reel-media {
+            transform: scale(1.02);
+        }
+
+        .reel-play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(255,255,255,0.7);
+            background: rgba(5,5,5,0.35);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        .reel-play-icon svg { fill: #fff; margin-left: 3px; }
+
+        .reel-card.is-playing .reel-play-icon {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.6);
         }
 
         .reel-meta {
             padding: 25px;
+            position: relative;
+            z-index: 4;
         }
 
         .reel-meta .cam-specs {
@@ -541,13 +668,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <source src="https://assets.mixkit.co/videos/preview/mixkit-photographer-taking-pictures-in-a-studio-41484-large.mp4" type="video/mp4">
     </video>
     <div class="hero-overlay"></div>
+    <div class="hero-scanlines"></div>
 
     <div id="hero">
         <div class="lens-tag">NOW SHOWING · FEATURED FILM STUDIO</div>
         <div class="hero-text">
             <h1>YOUR DAY.<br>IN MOTION.</h1>
             <p>We don't just record the day — we direct it, light it, and cut it like cinema. Based at Bole Medhanialem, working across Ethiopia.</p>
-            <a href="#booking" style="display:inline-block; background: var(--accent-gold); color: #000; padding: 16px 32px; font-weight:800; text-decoration:none; text-transform:uppercase; letter-spacing:2px; font-size:13px;">Book Date</a>
+            <a href="#booking" class="hero-cta">Book Date</a>
         </div>
     </div>
 </div>
@@ -570,8 +698,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <div class="reels-grid">
         <?php foreach ($reels as $r): ?>
-            <div class="reel-card">
-                <img src="<?= $r['image'] ?>" class="reel-img" alt="<?= $r['title'] ?>">
+            <div class="reel-card" data-reel-card>
+                <div class="reel-media">
+                    <img src="<?= $r['image'] ?>" class="reel-poster" alt="<?= $r['title'] ?>">
+                    <video class="reel-video" src="<?= $r['video'] ?>" muted loop playsinline preload="none"></video>
+                    <div class="reel-play-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                </div>
                 <div class="reel-meta">
                     <div class="cam-specs"><?= $r['meta'] ?></div>
                     <h3><?= $r['title'] ?></h3>
@@ -663,6 +797,54 @@ document.addEventListener("DOMContentLoaded", function () {
         minDate: "today",
         disable: unavailableDates,
         locale: { firstDayOfWeek: 1 }
+    });
+
+    // Reel cards: crossfade poster -> looping muted preview video on hover/tap
+    const reelCards = document.querySelectorAll('[data-reel-card]');
+    reelCards.forEach(function (card) {
+        const video = card.querySelector('.reel-video');
+        if (!video) return;
+
+        let playPromise;
+
+        function startPreview() {
+            card.classList.add('is-playing');
+            if (video.readyState < 2) {
+                video.preload = 'auto';
+                video.load();
+            }
+            playPromise = video.play().catch(function () {
+                // Autoplay can be blocked in some contexts — fail silently, poster stays visible.
+                card.classList.remove('is-playing');
+            });
+        }
+
+        function stopPreview() {
+            card.classList.remove('is-playing');
+            Promise.resolve(playPromise).finally(function () {
+                video.pause();
+                video.currentTime = 0;
+            });
+        }
+
+        card.addEventListener('mouseenter', startPreview);
+        card.addEventListener('mouseleave', stopPreview);
+
+        // Touch devices: tap to toggle preview instead of relying on hover
+        card.addEventListener('touchstart', function (e) {
+            if (card.classList.contains('is-playing')) {
+                stopPreview();
+            } else {
+                reelCards.forEach(function (other) {
+                    if (other !== card) {
+                        const otherVideo = other.querySelector('.reel-video');
+                        other.classList.remove('is-playing');
+                        if (otherVideo) { otherVideo.pause(); otherVideo.currentTime = 0; }
+                    }
+                });
+                startPreview();
+            }
+        }, { passive: true });
     });
 });
 </script>
