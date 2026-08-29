@@ -16,10 +16,10 @@ $options = [
 ];
 
 // Studio Data
-$studio_name = "Studio Vision";
+$studio_name = "Photo Luqas Studio";
 $tagline     = "Professional Photo & Video Home Studio";
 $phone       = "+251 900 000 000";
-$location    = "Addis Ababa, Ethiopia";
+$location    = "Kaffa Bonga , Ethiopia";
 
 $services = [
     [
@@ -216,7 +216,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 rgba(9, 13, 22, 0.95) 0%,
                 rgba(9, 13, 22, 0.8) 50%,
                 rgba(9, 13, 22, 0.6) 100%
-            ), url('https://lightroom-photoshop-tutorials.com/wp-content/uploads/2021/09/Best-Mirrorless-Cameras-for-Professional-Photographers.webp') center/cover no-repeat;
+                /* https://lightroom-photoshop-tutorials.com/wp-content/uploads/2021/09/Best-Mirrorless-Cameras-for-Professional-Photographers.webp */
+                
+            ), url('https://tse1.mm.bing.net/th/id/OIP.egzcAi6opQIa86Gb1bGOUAHaEO?r=0&w=1792&h=1024&rs=1&pid=ImgDetMain&o=7&rm=3') center/cover no-repeat;
             display: flex;
             align-items: center;
         }
