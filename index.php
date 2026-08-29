@@ -921,11 +921,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 // ============================================
-// HERO: 3D DSLR-style camera that idles with a
-// gentle turntable spin and turns/tilts to follow
-// the mouse cursor like it's tracking the viewer,
-// set inside a drifting gold particle field. Click
-// anywhere in the hero to fire the shutter/flash.
+// HERO: a stylized 3D "cameraman" figure — a
+// low-poly bronze/gold sculpture holding a camera
+// up to shoot — idles with a subtle weight-shift
+// sway and turns/tilts to follow the mouse cursor
+// like it's tracking the viewer, set inside a
+// drifting gold particle field. Click anywhere in
+// the hero to fire the shutter/flash.
 // ============================================
 (function () {
     const canvas = document.getElementById('hero-canvas');
@@ -935,13 +937,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     const scene = new THREE.Scene();
     const cam3d = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    cam3d.position.set(0, 0, 46);
+    cam3d.position.set(0, 0, 50);
 
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    // ---- Lighting: warm key light + cool rim light for a cinematic metal/matte look ----
+    // ---- Lighting: warm key light + cool rim light for a cinematic metal look ----
     const ambient = new THREE.AmbientLight(0x404040, 1.5);
     scene.add(ambient);
 
@@ -957,11 +959,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     fillLight.position.set(0, 30, 20);
     scene.add(fillLight);
 
-    // ---- Materials ----
-    const bodyMaterial = new THREE.MeshStandardMaterial({
+    // ---- Materials: whole figure reads as a warm bronze/gold sculpture,
+    // with the held camera in matte charcoal + gold accents ----
+    const bronzeMaterial = new THREE.MeshStandardMaterial({
+        color: 0xc9902f,
+        metalness: 0.75,
+        roughness: 0.32,
+        emissive: 0x2a1c06,
+        emissiveIntensity: 0.15
+    });
+
+    const bronzeDark = new THREE.MeshStandardMaterial({
+        color: 0x8a651f,
+        metalness: 0.7,
+        roughness: 0.4
+    });
+
+    const cameraBodyMat = new THREE.MeshStandardMaterial({
         color: 0x141414,
         metalness: 0.55,
-        roughness: 0.38
+        roughness: 0.4
     });
 
     const goldMaterial = new THREE.MeshStandardMaterial({
@@ -980,117 +997,143 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         emissiveIntensity: 0.4
     });
 
-    const flashMaterial = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        emissive: 0xffffff,
-        emissiveIntensity: 0.05,
-        metalness: 0.1,
-        roughness: 0.3
+    // ---- Build the cameraman figure ----
+    const figureGroup = new THREE.Group();
+
+    // Legs, slightly apart in a stable stance
+    [-1.8, 1.8].forEach(function (x) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.0, 9, 16), bronzeDark);
+        leg.position.set(x, -8.5, 0);
+        figureGroup.add(leg);
+
+        const foot = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.7, 2.6), bronzeDark);
+        foot.position.set(x, -13, 0.6);
+        figureGroup.add(foot);
     });
 
-    // ---- Build a procedural DSLR camera ----
-    const cameraGroup = new THREE.Group();
+    // Hips
+    const hips = new THREE.Mesh(new THREE.BoxGeometry(4.2, 2, 2.6), bronzeDark);
+    hips.position.set(0, -4.2, 0);
+    figureGroup.add(hips);
 
-    // Main body block
-    const body = new THREE.Mesh(new THREE.BoxGeometry(14, 8.5, 5.5), bodyMaterial);
-    cameraGroup.add(body);
+    // Torso, tapered so shoulders read wider than the waist
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 2.6, 8.5, 20), bronzeMaterial);
+    torso.position.set(0, 0.8, 0);
+    figureGroup.add(torso);
 
-    // Front grip bump (right side, slightly forward)
-    const grip = new THREE.Mesh(new THREE.BoxGeometry(3, 8.5, 6.2), bodyMaterial);
-    grip.position.set(6.8, -0.4, 0.3);
-    cameraGroup.add(grip);
+    // Neck
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.0, 1.3, 16), bronzeDark);
+    neck.position.set(0, 5.4, 0);
+    figureGroup.add(neck);
 
-    // Top viewfinder hump (pentaprism), centered
-    const hump = new THREE.Mesh(new THREE.BoxGeometry(5.2, 2.6, 4.6), bodyMaterial);
-    hump.position.set(-0.5, 5.3, 0);
-    cameraGroup.add(hump);
+    // Head, mounted on its own pivot so it can "look" slightly further than the body
+    const headPivot = new THREE.Group();
+    headPivot.position.set(0, 6.9, 0);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(2.0, 32, 32), bronzeMaterial);
+    headPivot.add(head);
+    figureGroup.add(headPivot);
 
-    const humpTop = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.8, 1.6, 5), bodyMaterial);
-    humpTop.position.set(-0.5, 6.9, 0);
-    humpTop.rotation.y = Math.PI / 5;
-    cameraGroup.add(humpTop);
+    // Shoulders, small caps at the top of the torso where the arms attach
+    [-3.4, 3.4].forEach(function (x) {
+        const shoulder = new THREE.Mesh(new THREE.SphereGeometry(1.15, 20, 20), bronzeMaterial);
+        shoulder.position.set(x, 4.0, 0.2);
+        figureGroup.add(shoulder);
+    });
 
-    // Hot-shoe on top of the hump
-    const hotShoe = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.4, 1.6), goldMaterial);
-    hotShoe.position.set(-0.5, 7.75, 0);
-    cameraGroup.add(hotShoe);
+    // Arms: upper arm + forearm on each side, bent to raise the camera to eye level.
+    // Built as pivoted groups so the bend angles read naturally.
+    function buildArm(sideSign) {
+        const shoulderPivot = new THREE.Group();
+        shoulderPivot.position.set(sideSign * 3.4, 4.0, 0.2);
+        shoulderPivot.rotation.z = sideSign * -0.9;
+        shoulderPivot.rotation.x = 0.35;
 
-    // Lens mount ring (gold accent) on the front face
-    const mountRing = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.35, 20, 48), goldMaterial);
-    mountRing.position.set(-1.2, -0.3, 2.9);
-    cameraGroup.add(mountRing);
+        const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.7, 4.6, 16), bronzeMaterial);
+        upperArm.position.y = -2.3;
+        shoulderPivot.add(upperArm);
 
-    // Lens barrel, built from a few stacked cylinders for a zoom-lens look
-    const lensGroup = new THREE.Group();
-    const barrel1 = new THREE.Mesh(new THREE.CylinderGeometry(3.0, 3.0, 3.2, 40), bodyMaterial);
-    barrel1.rotation.x = Math.PI / 2;
-    barrel1.position.z = 1.7;
-    lensGroup.add(barrel1);
+        const elbowPivot = new THREE.Group();
+        elbowPivot.position.y = -4.6;
+        elbowPivot.rotation.z = sideSign * 1.5;
+        elbowPivot.rotation.x = -0.5;
+        shoulderPivot.add(elbowPivot);
 
-    const barrel2 = new THREE.Mesh(new THREE.CylinderGeometry(2.7, 2.7, 3.6, 40), bodyMaterial);
-    barrel2.rotation.x = Math.PI / 2;
-    barrel2.position.z = 4.6;
-    lensGroup.add(barrel2);
+        const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.6, 4.2, 16), bronzeMaterial);
+        forearm.position.y = -2.1;
+        elbowPivot.add(forearm);
 
-    const focusRing = new THREE.Mesh(new THREE.CylinderGeometry(2.85, 2.85, 0.6, 40), goldMaterial);
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.75, 16, 16), bronzeMaterial);
+        hand.position.y = -4.2;
+        elbowPivot.add(hand);
+
+        return { shoulderPivot: shoulderPivot, handY: -4.2, elbowPivot: elbowPivot };
+    }
+
+    const leftArm = buildArm(1);
+    const rightArm = buildArm(-1);
+    figureGroup.add(leftArm.shoulderPivot);
+    figureGroup.add(rightArm.shoulderPivot);
+
+    // The camera, held up in front of the face by both hands
+    const heldCamera = new THREE.Group();
+
+    const camBody = new THREE.Mesh(new THREE.BoxGeometry(6.5, 4.2, 3), cameraBodyMat);
+    heldCamera.add(camBody);
+
+    const camGrip = new THREE.Mesh(new THREE.BoxGeometry(1.6, 4.2, 3.2), cameraBodyMat);
+    camGrip.position.set(3.3, -0.2, 0.2);
+    heldCamera.add(camGrip);
+
+    const camHump = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.3, 2.4), cameraBodyMat);
+    camHump.position.set(-0.2, 2.5, 0);
+    heldCamera.add(camHump);
+
+    const lensBarrel = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 3.2, 32), cameraBodyMat);
+    lensBarrel.rotation.x = Math.PI / 2;
+    lensBarrel.position.set(-0.6, -0.2, 3.0);
+    heldCamera.add(lensBarrel);
+
+    const focusRing = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.7, 0.4, 32), goldMaterial);
     focusRing.rotation.x = Math.PI / 2;
-    focusRing.position.z = 3.5;
-    lensGroup.add(focusRing);
+    focusRing.position.set(-0.6, -0.2, 2.3);
+    heldCamera.add(focusRing);
 
-    const lensGlass = new THREE.Mesh(new THREE.CircleGeometry(2.3, 40), glassMaterial);
-    lensGlass.position.z = 6.4;
-    lensGroup.add(lensGlass);
+    const lensGlass = new THREE.Mesh(new THREE.CircleGeometry(1.3, 32), glassMaterial);
+    lensGlass.position.set(-0.6, -0.2, 4.6);
+    heldCamera.add(lensGlass);
 
-    const lensRim = new THREE.Mesh(new THREE.TorusGeometry(2.45, 0.22, 16, 40), goldMaterial);
-    lensRim.position.z = 6.4;
-    lensGroup.add(lensRim);
+    const lensRim = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.15, 12, 32), goldMaterial);
+    lensRim.position.set(-0.6, -0.2, 4.6);
+    heldCamera.add(lensRim);
 
-    lensGroup.position.set(-1.2, -0.3, 2.8);
-    cameraGroup.add(lensGroup);
+    const shutterButton = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.25, 16), goldMaterial);
+    shutterButton.position.set(3.3, 2.0, 1.0);
+    heldCamera.add(shutterButton);
 
-    // Flash unit, small box popped up on the left of the hump
-    const flash = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.2, 2.4), flashMaterial);
-    flash.position.set(-4.6, 5.0, 1.6);
-    cameraGroup.add(flash);
+    // Position the whole held-camera assembly up at eye/face height, in front of the head
+    heldCamera.position.set(0, 6.6, 4.6);
+    heldCamera.rotation.y = 0;
+    figureGroup.add(heldCamera);
 
-    // Shutter button + dial on top right
-    const shutterButton = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.35, 24), goldMaterial);
-    shutterButton.position.set(6.4, 4.5, 1.2);
-    cameraGroup.add(shutterButton);
+    figureGroup.rotation.y = -0.35;
+    figureGroup.scale.set(1.0, 1.0, 1.0);
+    figureGroup.position.y = -2;
+    scene.add(figureGroup);
 
-    const modeDial = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.5, 28), bodyMaterial);
-    modeDial.position.set(4.2, 4.5, 1.2);
-    cameraGroup.add(modeDial);
-
-    // Strap lugs, one each side
-    [-7.3, 7.3].forEach(function (x) {
-        const lug = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.18, 10, 20), goldMaterial);
-        lug.position.set(x, 3.2, -1.5);
-        lug.rotation.y = Math.PI / 2;
-        cameraGroup.add(lug);
-    });
-
-    // Brand plate accent on the front
-    const platePlate = new THREE.Mesh(new THREE.BoxGeometry(4, 0.5, 0.15), goldMaterial);
-    platePlate.position.set(-0.5, 1.6, 2.85);
-    cameraGroup.add(platePlate);
-
-    cameraGroup.rotation.y = -0.5;
-    cameraGroup.scale.set(1.05, 1.05, 1.05);
-    scene.add(cameraGroup);
-
-    // ---- A dedicated point light "flash" that pulses when triggered ----
+    // ---- A dedicated point light "flash" that pulses when triggered, sourced from the camera ----
     const flashLight = new THREE.PointLight(0xffffff, 0, 200);
-    flashLight.position.set(-4.6, 5.0, 10);
+    flashLight.position.set(0, 5, 20);
     scene.add(flashLight);
     let flashTimer = 0;
+    let recoil = 0;
 
     function triggerFlash() {
         flashTimer = 1;
+        recoil = 1;
     }
     heroWrapper.addEventListener('click', triggerFlash);
 
-    // ---- Ambient particle dust for depth behind/around the camera ----
+    // ---- Ambient particle dust for depth behind/around the figure ----
     const PARTICLE_COUNT = 900;
     const positions = new Float32Array(PARTICLE_COUNT * 3);
     for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -1111,16 +1154,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     const particles = new THREE.Points(geometry, material);
     scene.add(particles);
 
-    // ---- Mouse tracking: the camera turns to "look" toward the cursor ----
+    // ---- Mouse tracking: the figure's body turns and the head leans in a little further ----
     let mouseX = 0, mouseY = 0;
-    let targetRotY = -0.5, targetRotX = 0;
+    let targetRotY = -0.35, targetRotX = 0;
 
     function onPointerMove(clientX, clientY) {
         const rect = heroWrapper.getBoundingClientRect();
         mouseX = ((clientX - rect.left) / rect.width) * 2 - 1;
         mouseY = ((clientY - rect.top) / rect.height) * 2 - 1;
-        targetRotY = -0.5 + mouseX * 0.75;
-        targetRotX = -mouseY * 0.35;
+        targetRotY = -0.35 + mouseX * 0.55;
+        targetRotX = -mouseY * 0.25;
     }
 
     window.addEventListener('mousemove', function (e) { onPointerMove(e.clientX, e.clientY); });
@@ -1136,33 +1179,41 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     window.addEventListener('resize', onResize);
 
     const clock = new THREE.Clock();
-    let idleSpin = 0;
+    let idleSway = 0;
 
     function animate() {
         requestAnimationFrame(animate);
         const dt = clock.getDelta();
         const elapsed = clock.getElapsedTime();
 
-        // Slow idle turntable drift layered under the mouse-tracking turn
-        idleSpin += dt * 0.08;
+        // Slow idle weight-shift sway layered under the mouse-tracking turn
+        idleSway += dt * 0.1;
 
-        cameraGroup.rotation.y += ((targetRotY + Math.sin(idleSpin) * 0.15) - cameraGroup.rotation.y) * 0.06;
-        cameraGroup.rotation.x += (targetRotX - cameraGroup.rotation.x) * 0.06;
+        figureGroup.rotation.y += ((targetRotY + Math.sin(idleSway) * 0.08) - figureGroup.rotation.y) * 0.06;
+        figureGroup.rotation.x += (targetRotX * 0.4 - figureGroup.rotation.x) * 0.06;
 
-        // Slight bob for life-like drift
-        cameraGroup.position.y = Math.sin(elapsed * 0.6) * 1.0;
+        // Head leans in a touch further than the body for a more attentive "look"
+        headPivot.rotation.y += (mouseX * 0.35 - headPivot.rotation.y) * 0.08;
+        headPivot.rotation.x += (-mouseY * 0.25 - headPivot.rotation.x) * 0.08;
 
-        // 3D camera (the viewer's viewpoint) drifts subtly with the cursor for parallax depth
+        // Gentle breathing bob
+        figureGroup.position.y = -2 + Math.sin(elapsed * 0.6) * 0.5;
+
+        // Camera drifts subtly with the cursor for parallax depth
         cam3d.position.x += (mouseX * 6 - cam3d.position.x) * 0.03;
         cam3d.position.y += (-mouseY * 4 - cam3d.position.y) * 0.03;
-        cam3d.lookAt(cameraGroup.position);
+        cam3d.lookAt(0, 4, 0);
 
         particles.rotation.y = elapsed * 0.015;
 
-        // Shutter flash decay
+        // Shutter flash decay, with a small recoil "kick" on the held camera
         if (flashTimer > 0) {
             flashTimer -= dt * 2.5;
             flashLight.intensity = Math.max(0, flashTimer) * 6;
+        }
+        if (recoil > 0) {
+            recoil -= dt * 4;
+            heldCamera.position.z = 4.6 + Math.max(0, recoil) * 1.2;
         }
 
         renderer.render(scene, cam3d);
