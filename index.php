@@ -16,10 +16,10 @@ $options = [
 ];
 
 // Studio Data
-$studio_name = "Studio Vision";
+$studio_name = "Photo luqas Vision";
 $tagline     = "Professional Photo & Video Home Studio";
 $phone       = "+251 900 000 000";
-$location    = "Addis Ababa, Ethiopia";
+$location    = "Bonga Kaffa, Ethiopia";
 
 $services = [
     [
