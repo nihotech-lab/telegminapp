@@ -1,992 +1,3731 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADI Photo Shop — Cinematic Film Studio & Stills</title>
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080808">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<title>ADI Pictures | Cinematic Wedding & Event Films</title>
 
-    <style>
-        :root {
-            --bg-black: #040404;
-            --bg-card: rgba(18, 18, 20, 0.65);
-            --accent-gold: #e2b13c;
-            --accent-gold-glow: rgba(226, 177, 60, 0.4);
-            --text-main: #f5f5f7;
-            --text-muted: #999999;
-            --border-line: rgba(255, 255, 255, 0.12);
-            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-        }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            scroll-behavior: smooth;
-        }
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-        body {
-            background-color: var(--bg-black);
-            color: var(--text-main);
-            overflow-x: hidden;
-            line-height: 1.6;
-        }
+<style>
 
-        /* CREATIVE FILM NOISE & GRAIN OVERLAY */
-        .film-grain {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 999;
-            opacity: 0.03;
-            background: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80') repeat;
-        }
+/* =========================================================
+   RESET
+========================================================= */
 
-        /* HEADER & NAVIGATION */
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(4, 4, 4, 0.85);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border-line);
-            z-index: 1000;
-        }
-
-        nav {
-            max-width: 1350px;
-            margin: auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 22px 30px;
-        }
-
-        .logo {
-            font-size: 20px;
-            font-weight: 900;
-            letter-spacing: 4px;
-            color: #fff;
-            text-transform: uppercase;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-        .logo span { color: var(--accent-gold); }
+html{
+    scroll-behavior:smooth;
+}
 
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 35px;
-        }
+body{
+    background:#080808;
+    color:#fff;
+    font-family:"DM Sans",Arial,sans-serif;
+    overflow-x:hidden;
+}
 
-        nav a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            transition: color 0.3s ease;
-        }
+body.light{
+    background:#f4f4f2;
+    color:#111;
+}
 
-        nav a:hover { color: var(--accent-gold); }
+a{
+    color:inherit;
+    text-decoration:none;
+}
 
-        /* HERO WITH 3D INTERACTIVE OBJECT */
-        #hero-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            background: radial-gradient(circle at 70% 50%, rgba(226, 177, 60, 0.12) 0%, transparent 65%);
-        }
+button,
+input,
+textarea,
+select{
+    font:inherit;
+}
 
-        #three-canvas {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            pointer-events: none;
-        }
+button{
+    cursor:pointer;
+}
 
-        .hero-container {
-            position: relative;
-            z-index: 2;
-            max-width: 1350px;
-            margin: auto;
-            width: 100%;
-            padding: 0 30px;
-        }
+/* =========================================================
+   LOADER
+========================================================= */
 
-        .hero-text {
-            max-width: 650px;
-            animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
+.loader{
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    background:#050505;
+    display:grid;
+    place-items:center;
+    transition:
+        opacity .8s ease,
+        visibility .8s ease;
+}
 
-        .lens-tag {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--accent-gold);
-            letter-spacing: 4px;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            display: inline-block;
-            background: rgba(226, 177, 60, 0.1);
-            padding: 6px 14px;
-            border-radius: 4px;
-            border: 1px solid rgba(226, 177, 60, 0.3);
-            box-shadow: 0 0 15px rgba(226, 177, 60, 0.15);
-        }
+.loader.hide{
+    opacity:0;
+    visibility:hidden;
+}
 
-        .hero-text h1 {
-            font-size: clamp(48px, 7vw, 88px);
-            font-weight: 900;
-            line-height: 0.95;
-            letter-spacing: -2px;
-            text-transform: uppercase;
-            margin-bottom: 25px;
-            background: linear-gradient(180deg, #ffffff 0%, #a1a1a1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+.loader-content{
+    text-align:center;
+}
 
-        .hero-text p {
-            font-size: 18px;
-            color: var(--text-muted);
-            margin-bottom: 40px;
-            max-width: 520px;
-        }
+.loader-logo{
+    font-family:"Space Mono";
+    font-size:38px;
+    font-weight:700;
+    letter-spacing:8px;
+}
 
-        .btn-gold {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--accent-gold);
-            color: #000;
-            padding: 18px 36px;
-            font-weight: 800;
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 13px;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px var(--accent-gold-glow);
-            cursor: pointer;
-            border: none;
-        }
+.loader-logo span{
+    display:block;
+    color:#ed1c24;
+    font-size:10px;
+    letter-spacing:5px;
+    margin-top:8px;
+}
 
-        .btn-gold:hover {
-            background: #fff;
-            transform: translateY(-3px);
-            box-shadow: 0 15px 35px rgba(255, 255, 255, 0.3);
-        }
+.loader-bar{
+    width:240px;
+    height:2px;
+    background:#333;
+    margin:25px auto 0;
+    overflow:hidden;
+}
 
-        /* MARQUEE TICKER */
-        .marquee-container {
-            position: relative;
-            z-index: 5;
-            width: 100%;
-            overflow: hidden;
-            background: var(--bg-black);
-            border-top: 1px solid var(--border-line);
-            border-bottom: 1px solid var(--border-line);
-            padding: 20px 0;
-            white-space: nowrap;
-        }
+.loader-bar span{
+    display:block;
+    height:100%;
+    width:40%;
+    background:#ed1c24;
+    animation:loading 1.2s infinite;
+}
 
-        .marquee-content {
-            display: inline-block;
-            animation: marquee 30s linear infinite;
-        }
+@keyframes loading{
+    from{
+        transform:translateX(-150%);
+    }
+    to{
+        transform:translateX(350%);
+    }
+}
 
-        .marquee-content span {
-            font-family: var(--font-mono);
-            font-size: 13px;
-            letter-spacing: 4px;
-            color: var(--text-muted);
-            margin-right: 60px;
-            text-transform: uppercase;
-        }
+/* =========================================================
+   PROGRESS BAR
+========================================================= */
 
-        .marquee-content span strong { color: var(--accent-gold); }
+.progress{
+    position:fixed;
+    top:0;
+    left:0;
+    width:0;
+    height:3px;
+    background:#ed1c24;
+    z-index:100000;
+}
 
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
+/* =========================================================
+   HEADER
+========================================================= */
 
-        /* SECTIONS & GRID SYSTEM */
-        section {
-            max-width: 1350px;
-            margin: auto;
-            padding: 120px 30px;
-        }
+.header{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:92px;
 
-        .section-hdr {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 60px;
-            border-bottom: 1px solid var(--border-line);
-            padding-bottom: 25px;
-        }
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
 
-        .section-hdr h2 {
-            font-size: 38px;
-            font-weight: 900;
-            letter-spacing: -1px;
-            text-transform: uppercase;
-        }
+    padding:0 5%;
 
-        .section-hdr p {
-            font-family: var(--font-mono);
-            color: var(--accent-gold);
-            font-size: 12px;
-            letter-spacing: 2px;
-        }
+    z-index:5000;
 
-        /* REELS & SERVICE CARDS WITH HOVER GLOW */
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 35px;
-        }
+    background:rgba(5,5,5,.70);
+    backdrop-filter:blur(18px);
 
-        .card {
-            position: relative;
-            background: var(--bg-card);
-            border: 1px solid var(--border-line);
-            border-radius: 8px;
-            overflow: hidden;
-            backdrop-filter: blur(12px);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            cursor: pointer;
-        }
+    border-bottom:1px solid rgba(255,255,255,.08);
 
-        .card:hover {
-            border-color: var(--accent-gold);
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(226, 177, 60, 0.15);
-        }
+    transition:.3s;
+}
 
-        .card-img-wrapper {
-            position: relative;
-            overflow: hidden;
-            height: 400px;
-        }
+.header.scrolled{
+    background:rgba(5,5,5,.95);
+}
 
-        .card-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: grayscale(20%);
-            transition: filter 0.5s ease, transform 0.5s ease;
-        }
+.logo{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
 
-        .card:hover .card-img {
-            filter: grayscale(0%);
-            transform: scale(1.08);
-        }
+.logo-camera{
+    font-size:36px;
+}
 
-        /* CREATIVE PLAY BUTTON OVERLAY */
-        .play-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            width: 70px;
-            height: 70px;
-            background: rgba(226, 177, 60, 0.9);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: all 0.4s ease;
-            box-shadow: 0 0 30px rgba(226, 177, 60, 0.6);
-        }
+.logo-name{
+    font-size:30px;
+    font-weight:500;
+    letter-spacing:-2px;
+}
 
-        .card:hover .play-overlay {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
+.logo-info{
+    font-family:"Space Mono";
+    font-size:12px;
+    line-height:1.1;
+}
 
-        .play-overlay svg {
-            fill: #000;
-            margin-left: 4px;
-        }
+.logo-info strong{
+    color:#ed1c24;
+}
 
-        .card-body { padding: 30px; }
+.logo-info small{
+    display:block;
+    font-size:5px;
+    color:#888;
+    letter-spacing:1px;
+    margin-top:4px;
+}
 
-        .card-meta {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--accent-gold);
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
+/* Navigation */
 
-        .card-body h3 {
-            font-size: 22px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
+.nav{
+    display:flex;
+    gap:35px;
+}
 
-        /* BOOKING FORM */
-        .booking-box {
-            background: var(--bg-card);
-            border: 1px solid var(--border-line);
-            border-radius: 12px;
-            padding: 60px;
-            max-width: 800px;
-            margin: auto;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
-        }
+.nav a{
+    font-family:"Space Mono";
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#aaa;
+    transition:.3s;
+}
 
-        .form-group { margin-bottom: 25px; }
+.nav a:hover{
+    color:#ed1c24;
+}
 
-        label {
-            display: block;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
+/* Header actions */
 
-        input, select, textarea {
-            width: 100%;
-            padding: 16px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid var(--border-line);
-            border-radius: 6px;
-            color: #fff;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
+.header-actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
 
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--accent-gold);
-            box-shadow: 0 0 12px var(--accent-gold-glow);
-        }
+.theme-btn{
+    width:55px;
+    height:50px;
 
-        .btn-submit {
-            background: var(--accent-gold);
-            color: #000;
-            font-weight: 800;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            padding: 20px;
-            width: 100%;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 25px var(--accent-gold-glow);
-        }
+    color:#fff;
+    background:transparent;
 
-        .btn-submit:hover {
-            background: #fff;
-            box-shadow: 0 15px 35px rgba(255, 255, 255, 0.3);
-        }
+    border:1px solid #444;
 
-        .alert {
-            padding: 15px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            margin-bottom: 25px;
-            border-radius: 6px;
-            text-align: center;
-            display: none;
-            animation: fadeInUp 0.4s ease forwards;
-        }
-        .alert-success { background: rgba(226, 177, 60, 0.15); color: var(--accent-gold); border: 1px solid var(--accent-gold); }
-        .alert-error { background: rgba(255, 85, 85, 0.15); color: #ff5555; border: 1px solid #ff5555; }
+    font-size:22px;
 
-        /* CREATIVE CINEMATIC VIDEO MODAL */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.92);
-            backdrop-filter: blur(20px);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.4s ease;
-        }
+    transition:.3s;
+}
 
-        .modal.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
+.theme-btn:hover{
+    border-color:#ed1c24;
+    color:#ed1c24;
+}
 
-        .modal-content {
-            position: relative;
-            width: 90%;
-            max-width: 1000px;
-            background: #000;
-            border: 1px solid var(--border-line);
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 0 50px rgba(226, 177, 60, 0.2);
-        }
+.book-btn{
+    background:#ed1c24;
+    color:#fff;
 
-        .modal-video-wrapper {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-            height: 0;
-        }
+    padding:18px 28px;
 
-        .modal-video-wrapper iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
+    font-family:"Space Mono";
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:2px;
 
-        .close-modal {
-            position: absolute;
-            top: 20px;
-            right: 25px;
-            color: #fff;
-            font-size: 32px;
-            cursor: pointer;
-            z-index: 2001;
-            transition: color 0.3s ease;
-        }
+    transition:.3s;
+}
 
-        .close-modal:hover { color: var(--accent-gold); }
+.book-btn:hover{
+    background:#ff2932;
+    transform:translateY(-3px);
+}
 
-        /* FLOATING WHATSAPP BUTTON */
-        .whatsapp-float {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #25d366;
-            color: #fff;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            z-index: 1000;
-            text-decoration: none;
-            transition: transform 0.3s ease;
-        }
+/* Mobile button */
 
-        .whatsapp-float:hover { transform: scale(1.12); }
+.menu-btn{
+    display:none;
 
-        footer {
-            border-top: 1px solid var(--border-line);
-            padding: 50px 30px;
-            text-align: center;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: var(--text-muted);
-        }
+    width:50px;
+    height:48px;
 
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    background:transparent;
+    border:1px solid #444;
+}
 
-        @media (max-width: 992px) {
-            #three-canvas { opacity: 0.3; }
-            nav ul { display: none; }
-            .booking-box { padding: 30px; }
-        }
-    </style>
+.menu-btn span{
+    display:block;
+    width:20px;
+    height:1px;
+    background:#fff;
+    margin:5px auto;
+}
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+
+.mobile-menu{
+    position:fixed;
+    top:92px;
+    left:0;
+    width:100%;
+
+    z-index:4900;
+
+    background:#090909;
+
+    padding:15px 25px;
+
+    transform:translateY(-120%);
+    transition:.45s;
+
+    border-bottom:1px solid #333;
+}
+
+.mobile-menu.open{
+    transform:translateY(0);
+}
+
+.mobile-menu a{
+    display:block;
+    padding:20px 5px;
+
+    border-bottom:1px solid #222;
+
+    font-family:"Space Mono";
+    font-size:12px;
+    letter-spacing:3px;
+}
+
+.mobile-menu .mobile-book{
+    color:#ed1c24;
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero{
+    position:relative;
+
+    min-height:100vh;
+
+    display:flex;
+    align-items:flex-end;
+
+    padding:0 5% 7%;
+
+    overflow:hidden;
+}
+
+.hero-background{
+    position:absolute;
+    inset:0;
+}
+
+.hero-slide{
+    position:absolute;
+    inset:0;
+
+    background-size:cover;
+    background-position:center;
+
+    opacity:0;
+
+    transform:scale(1.06);
+
+    transition:
+        opacity 1s ease,
+        transform 7s ease;
+}
+
+.hero-slide.active{
+    opacity:1;
+    transform:scale(1);
+}
+
+.hero-overlay{
+    position:absolute;
+    inset:0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(0,0,0,.88),
+            rgba(0,0,0,.45),
+            rgba(0,0,0,.35)
+        ),
+        linear-gradient(
+            0deg,
+            rgba(0,0,0,.95),
+            transparent 65%
+        );
+}
+
+.hero-content{
+    position:relative;
+    z-index:5;
+
+    max-width:780px;
+
+    margin-top:150px;
+}
+
+.eyebrow{
+    font-family:"Space Mono";
+    font-size:12px;
+    letter-spacing:5px;
+    color:#ddd;
+}
+
+.red-dot{
+    display:inline-block;
+
+    width:13px;
+    height:13px;
+
+    background:#ed1c24;
+
+    border-radius:50%;
+
+    margin-right:13px;
+}
+
+.hero h1{
+    margin:30px 0;
+
+    font-size:
+        clamp(
+            65px,
+            9vw,
+            135px
+        );
+
+    line-height:.88;
+
+    letter-spacing:-7px;
+}
+
+.hero h1 span{
+    color:#ed1c24;
+}
+
+.hero-description{
+    max-width:700px;
+
+    color:#ddd;
+
+    font-size:18px;
+
+    line-height:1.75;
+
+    margin-bottom:35px;
+}
+
+.hero-buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+}
+
+.primary-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    background:#ed1c24;
+
+    color:#fff;
+
+    border:0;
+
+    padding:19px 30px;
+
+    font-family:"Space Mono";
+    font-size:12px;
+    font-weight:700;
+
+    letter-spacing:2px;
+
+    transition:.3s;
+}
+
+.primary-btn:hover{
+    transform:translateY(-4px);
+    background:#ff2932;
+}
+
+.secondary-btn{
+    background:rgba(0,0,0,.35);
+
+    color:#fff;
+
+    border:1px solid #666;
+
+    padding:19px 30px;
+
+    font-family:"Space Mono";
+    font-size:12px;
+    font-weight:700;
+
+    letter-spacing:2px;
+
+    transition:.3s;
+}
+
+.secondary-btn:hover{
+    border-color:#ed1c24;
+    color:#ed1c24;
+}
+
+/* =========================================================
+   HERO META
+========================================================= */
+
+.hero-meta{
+    position:absolute;
+
+    right:5%;
+    bottom:6%;
+
+    z-index:10;
+
+    display:grid;
+
+    grid-template-columns:auto auto;
+
+    gap:20px 50px;
+
+    font-family:"Space Mono";
+}
+
+.playing{
+    display:flex;
+    gap:25px;
+}
+
+.playing small{
+    color:#999;
+
+    font-size:11px;
+
+    line-height:1.8;
+}
+
+.playing strong{
+    font-size:18px;
+
+    letter-spacing:2px;
+}
+
+.camera-info{
+    color:#ed1c24;
+
+    font-size:13px;
+}
+
+.camera-info span{
+    color:#777;
+    margin:0 8px;
+}
+
+.hero-dots{
+    grid-column:1/-1;
+
+    display:flex;
+
+    gap:8px;
+}
+
+.hero-dot{
+    width:76px;
+    height:53px;
+
+    background:rgba(0,0,0,.4);
+
+    border:1px solid #444;
+
+    color:#888;
+
+    font-family:"Space Mono";
+
+    transition:.3s;
+}
+
+.hero-dot:hover,
+.hero-dot.active{
+    border-color:#ed1c24;
+    color:#fff;
+}
+
+.mute-btn{
+    width:70px;
+    height:55px;
+
+    background:rgba(0,0,0,.5);
+
+    color:#fff;
+
+    border:1px solid #555;
+}
+
+.scroll-text{
+    position:absolute;
+
+    left:5%;
+    bottom:3%;
+
+    z-index:10;
+
+    font-family:"Space Mono";
+
+    font-size:9px;
+
+    letter-spacing:3px;
+
+    color:#777;
+}
+
+.scroll-text span{
+    color:#ed1c24;
+
+    margin-left:15px;
+}
+
+/* =========================================================
+   TICKER
+========================================================= */
+
+.ticker{
+    height:100px;
+
+    display:flex;
+    align-items:center;
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+    border-top:1px solid #222;
+    border-bottom:1px solid #222;
+
+    font-family:"Space Mono";
+
+    font-size:22px;
+
+    letter-spacing:7px;
+
+    color:#666;
+}
+
+.ticker-content{
+    animation:marquee 28s linear infinite;
+}
+
+.ticker strong{
+    color:#ed1c24;
+}
+
+@keyframes marquee{
+    from{
+        transform:translateX(0);
+    }
+
+    to{
+        transform:translateX(-50%);
+    }
+}
+
+/* =========================================================
+   GENERAL SECTION
+========================================================= */
+
+.section{
+    padding:125px 5%;
+
+    border-bottom:1px solid #222;
+}
+
+.section-header{
+    display:flex;
+
+    justify-content:space-between;
+    align-items:flex-end;
+
+    gap:40px;
+
+    margin-bottom:55px;
+}
+
+.section-kicker{
+    color:#ed1c24;
+
+    font-family:"Space Mono";
+
+    font-size:12px;
+
+    font-weight:700;
+
+    letter-spacing:5px;
+
+    margin-bottom:25px;
+}
+
+.section-kicker i{
+    display:inline-block;
+
+    width:65px;
+    height:3px;
+
+    background:#ed1c24;
+
+    margin-right:20px;
+
+    vertical-align:middle;
+}
+
+.section h2{
+    font-size:
+        clamp(
+            45px,
+            5vw,
+            78px
+        );
+
+    line-height:1;
+
+    letter-spacing:-4px;
+
+    margin-bottom:20px;
+}
+
+.section-description{
+    color:#999;
+
+    font-size:18px;
+
+    line-height:1.7;
+}
+
+/* =========================================================
+   SLIDER BUTTONS
+========================================================= */
+
+.slider-buttons{
+    display:flex;
+
+    gap:18px;
+}
+
+.slider-button{
+    width:88px;
+    height:88px;
+
+    background:#090909;
+
+    border:1px solid #333;
+
+    color:#fff;
+
+    font-size:40px;
+
+    transition:.3s;
+}
+
+.slider-button:hover{
+    border-color:#ed1c24;
+    color:#ed1c24;
+}
+
+/* =========================================================
+   REELS
+========================================================= */
+
+.horizontal-slider{
+    display:flex;
+
+    gap:30px;
+
+    overflow-x:auto;
+
+    scrollbar-width:none;
+
+    scroll-snap-type:x mandatory;
+}
+
+.horizontal-slider::-webkit-scrollbar{
+    display:none;
+}
+
+.reel{
+    position:relative;
+
+    flex:0 0 410px;
+
+    height:610px;
+
+    overflow:hidden;
+
+    border:1px solid #333;
+
+    scroll-snap-align:start;
+
+    cursor:pointer;
+}
+
+.reel img{
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    transition:.8s;
+}
+
+.reel:hover img{
+    transform:scale(1.06);
+}
+
+.reel-gradient{
+    position:absolute;
+    inset:0;
+
+    background:
+        linear-gradient(
+            0deg,
+            rgba(0,0,0,.95),
+            transparent 55%
+        );
+}
+
+.reel-number{
+    position:absolute;
+
+    top:30px;
+    left:28px;
+
+    font-family:"Space Mono";
+
+    font-size:11px;
+
+    letter-spacing:3px;
+}
+
+.play-circle{
+    position:absolute;
+
+    top:25px;
+    right:25px;
+
+    width:60px;
+    height:60px;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:50%;
+
+    background:rgba(0,0,0,.2);
+
+    border:1px solid #aaa;
+
+    color:#fff;
+
+    transition:.3s;
+}
+
+.reel:hover .play-circle{
+    background:#ed1c24;
+    border-color:#ed1c24;
+}
+
+.reel-info{
+    position:absolute;
+
+    left:28px;
+    right:20px;
+    bottom:28px;
+}
+
+.reel-info h3{
+    font-size:32px;
+
+    margin-bottom:10px;
+}
+
+.reel-info p{
+    font-family:"Space Mono";
+
+    color:#ed1c24;
+
+    font-size:11px;
+
+    letter-spacing:2px;
+}
+
+.reel-info p span{
+    color:#999;
+    margin-left:10px;
+}
+
+/* =========================================================
+   STILLS
+========================================================= */
+
+.stills{
+    background:#090909;
+}
+
+.still{
+    position:relative;
+
+    flex:0 0 560px;
+
+    height:430px;
+
+    overflow:hidden;
+
+    scroll-snap-align:start;
+}
+
+.still.wide{
+    flex-basis:760px;
+}
+
+.still img{
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    transition:.8s;
+}
+
+.still:hover img{
+    transform:scale(1.05);
+}
+
+.still-caption{
+    position:absolute;
+
+    left:0;
+    right:0;
+    bottom:0;
+
+    padding:35px 30px;
+
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+
+    background:
+        linear-gradient(
+            transparent,
+            rgba(0,0,0,.95)
+        );
+}
+
+.still-caption strong{
+    font-size:30px;
+}
+
+.still-caption span{
+    color:#aaa;
+
+    font-family:"Space Mono";
+
+    font-size:10px;
+}
+
+/* =========================================================
+   STUDIO
+========================================================= */
+
+.studio{
+    background:#0a0a0a;
+}
+
+.studio-grid{
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:8%;
+
+    align-items:center;
+}
+
+.studio h2{
+    font-size:
+        clamp(
+            45px,
+            5.5vw,
+            82px
+        );
+
+    line-height:1;
+
+    letter-spacing:-5px;
+}
+
+.studio h2 span{
+    color:#ed1c24;
+}
+
+.studio-text{
+    color:#aaa;
+
+    font-size:18px;
+
+    line-height:1.8;
+
+    margin-top:30px;
+}
+
+.stats{
+    display:flex;
+
+    gap:55px;
+
+    flex-wrap:wrap;
+
+    margin-top:60px;
+}
+
+.stat strong{
+    font-size:55px;
+
+    letter-spacing:-3px;
+}
+
+.stat-label{
+    display:block;
+
+    font-family:"Space Mono";
+
+    color:#666;
+
+    font-size:9px;
+
+    letter-spacing:3px;
+
+    margin-top:10px;
+}
+
+.studio-photo{
+    position:relative;
+
+    overflow:hidden;
+}
+
+.studio-photo img{
+    width:100%;
+    height:650px;
+
+    object-fit:cover;
+
+    transition:.8s;
+}
+
+.studio-photo:hover img{
+    transform:scale(1.04);
+}
+
+.photo-label{
+    position:absolute;
+
+    right:20px;
+    bottom:20px;
+
+    border:1px solid #aaa;
+
+    padding:10px;
+
+    font-family:"Space Mono";
+
+    font-size:10px;
+
+    letter-spacing:3px;
+}
+
+/* =========================================================
+   EDIT BAY
+========================================================= */
+
+.edit-card{
+    position:relative;
+
+    flex:0 0 330px;
+
+    height:470px;
+
+    overflow:hidden;
+
+    scroll-snap-align:start;
+}
+
+.edit-card img{
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    transition:.7s;
+}
+
+.edit-card:hover img{
+    transform:scale(1.05);
+}
+
+.edit-card::after{
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    background:
+        linear-gradient(
+            transparent 40%,
+            rgba(0,0,0,.95)
+        );
+}
+
+.edit-number{
+    position:absolute;
+
+    top:25px;
+    left:25px;
+
+    z-index:2;
+
+    font-family:"Space Mono";
+
+    font-size:11px;
+
+    letter-spacing:3px;
+}
+
+.edit-title{
+    position:absolute;
+
+    z-index:2;
+
+    left:25px;
+    bottom:25px;
+
+    font-size:28px;
+}
+
+/* =========================================================
+   CONTACT
+========================================================= */
+
+.contact{
+    padding-top:150px;
+    padding-bottom:150px;
+}
+
+.contact-box{
+    max-width:1050px;
+
+    margin:auto;
+
+    padding:70px;
+
+    border:1px solid #333;
+
+    background:
+        linear-gradient(
+            135deg,
+            #111,
+            #080808
+        );
+}
+
+.contact h2{
+    font-size:
+        clamp(
+            45px,
+            6vw,
+            85px
+        );
+
+    line-height:.95;
+
+    letter-spacing:-5px;
+
+    margin-bottom:30px;
+}
+
+.contact h2 span{
+    color:#ed1c24;
+}
+
+.contact-intro{
+    max-width:700px;
+
+    color:#999;
+
+    font-size:18px;
+
+    line-height:1.7;
+
+    margin-bottom:35px;
+}
+
+.form-row{
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:15px;
+
+    margin-top:15px;
+}
+
+input,
+textarea,
+select{
+    width:100%;
+
+    padding:18px;
+
+    background:#111;
+
+    color:#fff;
+
+    border:1px solid #333;
+
+    outline:none;
+}
+
+input:focus,
+textarea:focus,
+select:focus{
+    border-color:#ed1c24;
+}
+
+textarea{
+    margin-top:15px;
+
+    resize:vertical;
+}
+
+.form-button{
+    margin-top:18px;
+}
+
+.form-message{
+    color:#4de28b;
+
+    margin-top:15px;
+
+    display:block;
+
+    font-family:"Space Mono";
+
+    font-size:11px;
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+footer{
+    padding:70px 5%;
+
+    border-top:1px solid #222;
+
+    display:grid;
+
+    grid-template-columns:1fr auto auto;
+
+    align-items:center;
+
+    gap:30px;
+
+    color:#777;
+}
+
+.footer-logo{
+    font-family:"Space Mono";
+
+    font-weight:700;
+
+    font-size:25px;
+
+    color:#fff;
+}
+
+.footer-logo span{
+    color:#ed1c24;
+}
+
+.footer-category{
+    font-family:"Space Mono";
+
+    font-size:10px;
+
+    letter-spacing:2px;
+}
+
+.footer-links{
+    display:flex;
+
+    gap:25px;
+
+    font-family:"Space Mono";
+
+    font-size:10px;
+}
+
+.footer-links a:hover{
+    color:#ed1c24;
+}
+
+/* =========================================================
+   WHATSAPP
+========================================================= */
+
+.whatsapp{
+    position:fixed;
+
+    right:30px;
+    bottom:30px;
+
+    z-index:3000;
+
+    width:78px;
+    height:78px;
+
+    border-radius:50%;
+
+    display:grid;
+    place-items:center;
+
+    background:#20d66b;
+
+    color:#fff;
+
+    font-size:27px;
+
+    border:7px solid #061a0e;
+
+    box-shadow:
+        0 0 0 2px #0c6335,
+        0 0 30px rgba(32,214,107,.35);
+
+    animation:whatsappPulse 2s infinite;
+}
+
+@keyframes whatsappPulse{
+
+    0%,100%{
+        transform:scale(1);
+    }
+
+    50%{
+        transform:scale(1.07);
+    }
+
+}
+
+/* =========================================================
+   BACK TO TOP
+========================================================= */
+
+.back-top{
+    position:fixed;
+
+    right:30px;
+    bottom:125px;
+
+    z-index:2000;
+
+    width:45px;
+    height:45px;
+
+    background:#111;
+
+    color:#fff;
+
+    border:1px solid #555;
+
+    opacity:0;
+
+    pointer-events:none;
+
+    transition:.3s;
+}
+
+.back-top.show{
+    opacity:1;
+    pointer-events:auto;
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal{
+    position:fixed;
+
+    inset:0;
+
+    z-index:9998;
+
+    display:none;
+
+    place-items:center;
+
+    padding:25px;
+}
+
+.modal.open{
+    display:grid;
+}
+
+.modal-background{
+    position:absolute;
+
+    inset:0;
+
+    background:rgba(0,0,0,.88);
+
+    backdrop-filter:blur(10px);
+}
+
+.modal-box{
+    position:relative;
+
+    z-index:2;
+
+    width:min(850px,95vw);
+
+    background:#101010;
+
+    border:1px solid #444;
+
+    overflow:hidden;
+}
+
+.modal-close{
+    position:absolute;
+
+    right:15px;
+    top:15px;
+
+    z-index:5;
+
+    width:45px;
+    height:45px;
+
+    background:rgba(0,0,0,.8);
+
+    border:1px solid #aaa;
+
+    color:#fff;
+
+    font-size:30px;
+}
+
+.modal-image{
+    width:100%;
+
+    max-height:70vh;
+
+    object-fit:cover;
+}
+
+.modal-info{
+    padding:25px;
+}
+
+.modal-type{
+    color:#ed1c24;
+
+    font-family:"Space Mono";
+
+    font-size:10px;
+
+    letter-spacing:3px;
+}
+
+.modal-title{
+    font-size:36px;
+
+    margin-top:8px;
+}
+
+.modal-description{
+    color:#888;
+
+    margin-top:10px;
+}
+
+/* =========================================================
+   REVEAL ANIMATION
+========================================================= */
+
+.reveal{
+    opacity:0;
+
+    transform:translateY(45px);
+
+    transition:
+        opacity .9s ease,
+        transform .9s ease;
+}
+
+.reveal.visible{
+    opacity:1;
+
+    transform:translateY(0);
+}
+
+/* =========================================================
+   LIGHT MODE
+========================================================= */
+
+body.light .header{
+    background:rgba(245,245,243,.9);
+
+    border-color:#ddd;
+}
+
+body.light .nav a{
+    color:#555;
+}
+
+body.light .theme-btn{
+    color:#111;
+}
+
+body.light .section{
+    border-color:#ddd;
+}
+
+body.light .ticker{
+    border-color:#ddd;
+}
+
+body.light .still{
+    border-color:#ccc;
+}
+
+body.light .studio,
+body.light .stills{
+    background:#eee;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:900px){
+
+    .header{
+        height:76px;
+
+        padding:0 18px;
+    }
+
+    .logo-camera{
+        font-size:25px;
+    }
+
+    .logo-name{
+        font-size:22px;
+    }
+
+    .logo-info{
+        font-size:9px;
+    }
+
+    .nav{
+        display:none;
+    }
+
+    .theme-btn{
+        width:45px;
+        height:43px;
+    }
+
+    .book-btn{
+        padding:14px 16px;
+
+        font-size:9px;
+    }
+
+    .menu-btn{
+        display:block;
+    }
+
+    .mobile-menu{
+        top:76px;
+    }
+
+    .hero{
+        min-height:900px;
+
+        padding:
+            0
+            20px
+            145px;
+    }
+
+    .hero-content{
+        margin-top:100px;
+    }
+
+    .hero h1{
+        font-size:70px;
+
+        letter-spacing:-4px;
+    }
+
+    .hero-description{
+        font-size:16px;
+    }
+
+    .hero-buttons{
+        flex-direction:column;
+    }
+
+    .primary-btn,
+    .secondary-btn{
+        width:100%;
+    }
+
+    .hero-meta{
+        left:20px;
+        right:20px;
+
+        bottom:25px;
+
+        grid-template-columns:1fr auto;
+
+        gap:15px;
+    }
+
+    .hero-dots{
+        grid-column:1/-1;
+    }
+
+    .scroll-text{
+        display:none;
+    }
+
+    .section{
+        padding:
+            85px
+            20px;
+    }
+
+    .section-header{
+        flex-direction:column;
+
+        align-items:flex-start;
+    }
+
+    .slider-buttons{
+        align-self:flex-end;
+    }
+
+    .slider-button{
+        width:58px;
+        height:58px;
+    }
+
+    .reel{
+        flex-basis:78vw;
+
+        height:550px;
+    }
+
+    .still,
+    .still.wide{
+        flex-basis:88vw;
+
+        height:370px;
+    }
+
+    .studio-grid{
+        grid-template-columns:1fr;
+    }
+
+    .studio-photo{
+        margin-top:40px;
+    }
+
+    .studio-photo img{
+        height:500px;
+    }
+
+    .stats{
+        gap:25px;
+    }
+
+    .stat strong{
+        font-size:42px;
+    }
+
+    .contact{
+        padding:
+            90px
+            20px;
+    }
+
+    .contact-box{
+        padding:35px 22px;
+    }
+
+    .form-row{
+        grid-template-columns:1fr;
+    }
+
+    footer{
+        grid-template-columns:1fr;
+
+        gap:20px;
+    }
+
+    .whatsapp{
+        width:70px;
+        height:70px;
+
+        right:20px;
+        bottom:20px;
+    }
+
+    .back-top{
+        right:20px;
+        bottom:105px;
+    }
+
+}
+
+@media(max-width:500px){
+
+    .book-btn{
+        display:none;
+    }
+
+    .hero h1{
+        font-size:58px;
+    }
+
+    .eyebrow{
+        font-size:9px;
+
+        letter-spacing:3px;
+    }
+
+    .ticker{
+        height:70px;
+
+        font-size:14px;
+    }
+
+    .reel{
+        height:520px;
+    }
+
+    .contact h2{
+        font-size:48px;
+    }
+
+}
+
+</style>
 </head>
+
 <body>
 
-<div class="film-grain"></div>
+<!-- =====================================================
+     LOADER
+===================================================== -->
 
-<header>
-    <nav>
-        <div class="logo">ADI Photo Shope<span>.</span></div>
-        <ul>
-            <li><a href="#hero-wrapper">Studio</a></li>
-            <li><a href="#reels">Reels</a></li>
-            <li><a href="#services">Services</a></li>
-            <li><a href="#booking">Reserve</a></li>
-        </ul>
+<div class="loader" id="loader">
+
+    <div class="loader-content">
+
+        <div class="loader-logo">
+            ADI
+            <span>PICTURES</span>
+        </div>
+
+        <div class="loader-bar">
+            <span></span>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     PROGRESS
+===================================================== -->
+
+<div class="progress" id="progress"></div>
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header class="header" id="header">
+
+    <a href="#home" class="logo">
+
+        <div class="logo-camera">
+            ◉
+        </div>
+
+        <div class="logo-name">
+            ADI
+        </div>
+
+        <div class="logo-info">
+            <strong>PICTURES</strong>
+            <small>THINK · IMAGINE · CREATE</small>
+        </div>
+
+    </a>
+
+    <nav class="nav">
+
+        <a href="#films">Films</a>
+
+        <a href="#stills">Stills</a>
+
+        <a href="#studio">Studio</a>
+
+        <a href="#contact">Contact</a>
+
     </nav>
+
+    <div class="header-actions">
+
+        <button
+            class="theme-btn"
+            id="themeBtn">
+            ☼
+        </button>
+
+        <a
+            class="book-btn"
+            href="https://wa.me/251900000000?text=Hello%20AD%20Pictures%2C%20I%20want%20to%20book%20a%20shoot."
+            target="_blank">
+
+            ◉ &nbsp; BOOK A SHOOT
+
+        </a>
+
+        <button
+            class="menu-btn"
+            id="menuBtn">
+
+            <span></span>
+            <span></span>
+
+        </button>
+
+    </div>
+
 </header>
 
-<div id="hero-wrapper">
-    <div id="three-canvas"></div>
+<!-- =====================================================
+     MOBILE MENU
+===================================================== -->
 
-    <div class="hero-container">
-        <div class="hero-text">
-            <span class="lens-tag">3D CINEMATOGRAPHY EXPERIENCE</span>
-            <h1>CRAFTING<br>MOTION PICTURES.</h1>
-            <p>We direct, light, and cut your story like high-end cinema. Studio based at Bole Medhanialem, working worldwide.</p>
-            <a href="#booking" class="btn-gold">
-                Reserve Production
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+<div class="mobile-menu" id="mobileMenu">
+
+    <a href="#films">Films</a>
+
+    <a href="#stills">Stills</a>
+
+    <a href="#studio">Studio</a>
+
+    <a href="#contact">Contact</a>
+
+    <a
+        class="mobile-book"
+        href="https://wa.me/251900000000?text=Hello%20AD%20Pictures%2C%20I%20want%20to%20book."
+        target="_blank">
+
+        BOOK ON WHATSAPP ↗
+
+    </a>
+
+</div>
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
+
+<main id="home">
+
+<!-- =====================================================
+     HERO
+===================================================== -->
+
+<section class="hero">
+
+    <div class="hero-background">
+
+        <div
+            class="hero-slide active"
+            style="background-image:url('assets/reference-1.png')">
+        </div>
+
+        <div
+            class="hero-slide"
+            style="background-image:url('assets/reference-3.png')">
+        </div>
+
+        <div
+            class="hero-slide"
+            style="background-image:url('assets/reference-5.png')">
+        </div>
+
+    </div>
+
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+
+        <div class="eyebrow">
+
+            <span class="red-dot"></span>
+
+            NOW SHOWING
+
+            <span>•</span>
+
+            FEATURED FILM
+
+        </div>
+
+        <h1>
+
+            Your day.<br>
+
+            In <span>motion.</span>
+
+        </h1>
+
+        <p class="hero-description">
+
+            AD Pictures is a wedding & event film studio
+            in Addis Ababa. We don't just record the day —
+            we direct it, light it, and cut it like cinema.
+
+        </p>
+
+        <div class="hero-buttons">
+
+            <a
+                class="primary-btn"
+                href="https://wa.me/251900000000?text=Hello%20AD%20Pictures%2C%20I%20want%20to%20book%20a%20shoot."
+                target="_blank">
+
+                ◉ &nbsp; BOOK ON WHATSAPP
+
             </a>
+
+            <button
+                class="secondary-btn"
+                id="watchFilms">
+
+                ▶ &nbsp; WATCH THE FILMS
+
+            </button>
+
         </div>
-    </div>
-</div>
 
-<div class="marquee-container">
-    <div class="marquee-content">
-        <span>THINK · <strong>IMAGINE</strong> · CREATE</span>
-        <span>4K CINEMATOGRAPHY · <strong>24FPS</strong></span>
-        <span>AWLO BUSINESS CENTER · <strong>BOLE MEDHANIALEM</strong></span>
-        <span>THINK · <strong>IMAGINE</strong> · CREATE</span>
-        <span>4K CINEMATOGRAPHY · <strong>24FPS</strong></span>
-    </div>
-</div>
-
-<section id="reels">
-    <div class="section-hdr">
-        <h2>FEATURED REELS</h2>
-        <p>DIRECTED BY AD PICTURES</p>
     </div>
 
-    <div class="grid-3" id="reels-container">
+    <!-- HERO META -->
+
+    <div class="hero-meta">
+
+        <div class="playing">
+
+            <small>
+                NOW<br>
+                PLAYING
+            </small>
+
+            <strong id="heroTitle">
+                The Wow
+            </strong>
+
         </div>
+
+        <div class="camera-info">
+
+            4K
+
+            <span>·</span>
+
+            24FPS
+
+            <span>·</span>
+
+            <b id="aperture">
+                T1.8
+            </b>
+
+        </div>
+
+        <div class="hero-dots">
+
+            <button
+                class="hero-dot active"
+                data-slide="0">
+                01
+            </button>
+
+            <button
+                class="hero-dot"
+                data-slide="1">
+                02
+            </button>
+
+            <button
+                class="hero-dot"
+                data-slide="2">
+                03
+            </button>
+
+        </div>
+
+        <button
+            class="mute-btn"
+            id="muteBtn">
+
+            🔇
+
+        </button>
+
+    </div>
+
+    <div class="scroll-text">
+
+        SCROLL TO EXPLORE
+
+        <span>↓</span>
+
+    </div>
+
 </section>
 
-<section id="services">
-    <div class="section-hdr">
-        <h2>PRODUCTION SERVICES</h2>
-        <p>PACKAGES & SPECS</p>
+<!-- =====================================================
+     TICKER
+===================================================== -->
+
+<div class="ticker">
+
+    <div class="ticker-content">
+
+        FRAME ·
+
+        <strong>THINK</strong>
+
+        · IMAGINE ·
+
+        <strong>CREATE</strong>
+
+        · STORY ·
+
+        <strong>MOTION</strong>
+
+        · FRAME ·
+
+        <strong>THINK</strong>
+
+        · IMAGINE ·
+
+        <strong>CREATE</strong>
+
+        · STORY ·
+
+        <strong>MOTION</strong>
+
+        · FRAME ·
+
+        <strong>THINK</strong>
+
+        · IMAGINE ·
+
+        <strong>CREATE</strong>
+
     </div>
 
-    <div class="grid-3" id="services-container">
+</div>
+
+<!-- =====================================================
+     FEATURED FILMS
+===================================================== -->
+
+<section
+    class="section"
+    id="films">
+
+    <div class="section-header reveal">
+
+        <div>
+
+            <div class="section-kicker">
+
+                <i></i>
+
+                FEATURED FILMS
+
+            </div>
+
+            <h2>
+                Recent reels.
+            </h2>
+
+            <p class="section-description">
+
+                Vertical, cinematic, made for the way
+                people actually watch.<br>
+
+                Hover or tap a reel to play.
+
+            </p>
+
         </div>
+
+        <div class="slider-buttons">
+
+            <button
+                class="slider-button"
+                id="reelPrev">
+                ‹
+            </button>
+
+            <button
+                class="slider-button"
+                id="reelNext">
+                ›
+            </button>
+
+        </div>
+
+    </div>
+
+    <div
+        class="horizontal-slider"
+        id="reelSlider">
+
+        <!-- REEL 01 -->
+
+        <article
+            class="reel"
+            data-title="The Bride"
+            data-type="WEDDING FILM"
+            data-image="assets/reference-3.png">
+
+            <img
+                src="assets/reference-3.png"
+                alt="The Bride">
+
+            <div class="reel-gradient"></div>
+
+            <span class="reel-number">
+                REEL · 01
+            </span>
+
+            <button class="play-circle">
+                ▶
+            </button>
+
+            <div class="reel-info">
+
+                <h3>
+                    The Bride
+                </h3>
+
+                <p>
+                    WEDDING FILM
+
+                    <span>
+                        4K · 24FPS · T2.1
+                    </span>
+                </p>
+
+            </div>
+
+        </article>
+
+        <!-- REEL 02 -->
+
+        <article
+            class="reel"
+            data-title="Grand Entrance"
+            data-type="EVENT FILM"
+            data-image="assets/reference-5.png">
+
+            <img
+                src="assets/reference-5.png"
+                alt="Grand Entrance">
+
+            <div class="reel-gradient"></div>
+
+            <span class="reel-number">
+                REEL · 02
+            </span>
+
+            <button class="play-circle">
+                ▶
+            </button>
+
+            <div class="reel-info">
+
+                <h3>
+                    Grand Entrance
+                </h3>
+
+                <p>
+                    EVENT FILM
+
+                    <span>
+                        4K · 24FPS · T2.4
+                    </span>
+                </p>
+
+            </div>
+
+        </article>
+
+        <!-- REEL 03 -->
+
+        <article
+            class="reel"
+            data-title="The Veil"
+            data-type="WEDDING FILM"
+            data-image="assets/reference-6.png">
+
+            <img
+                src="assets/reference-6.png"
+                alt="The Veil">
+
+            <div class="reel-gradient"></div>
+
+            <span class="reel-number">
+                REEL · 03
+            </span>
+
+            <button class="play-circle">
+                ▶
+            </button>
+
+            <div class="reel-info">
+
+                <h3>
+                    The Veil
+                </h3>
+
+                <p>
+                    WEDDING FILM
+
+                    <span>
+                        4K · 24FPS · T2.0
+                    </span>
+                </p>
+
+            </div>
+
+        </article>
+
+        <!-- REEL 04 -->
+
+        <article
+            class="reel"
+            data-title="Habesha"
+            data-type="EVENT FILM"
+            data-image="assets/reference-4.png">
+
+            <img
+                src="assets/reference-4.png"
+                alt="Habesha">
+
+            <div class="reel-gradient"></div>
+
+            <span class="reel-number">
+                REEL · 04
+            </span>
+
+            <button class="play-circle">
+                ▶
+            </button>
+
+            <div class="reel-info">
+
+                <h3>
+                    Habesha
+                </h3>
+
+                <p>
+                    EVENT FILM
+
+                    <span>
+                        4K · 24FPS · T1.8
+                    </span>
+                </p>
+
+            </div>
+
+        </article>
+
+    </div>
+
 </section>
 
-<section id="booking">
-    <div class="section-hdr">
-        <h2>RESERVE SHOOT DATE</h2>
-        <p>DOUBLE-BOOKING PROTECTION</p>
+<!-- =====================================================
+     STILLS
+===================================================== -->
+
+<section
+    class="section stills"
+    id="stills">
+
+    <div class="section-header reveal">
+
+        <div>
+
+            <div class="section-kicker">
+
+                <i></i>
+
+                THE CONTACT SHEET
+
+            </div>
+
+            <h2>
+                Stills.
+            </h2>
+
+            <p class="section-description">
+
+                A selection of frames from recent weddings,
+                events and portrait sessions.
+
+            </p>
+
+        </div>
+
+        <div class="slider-buttons">
+
+            <button
+                class="slider-button"
+                id="stillPrev">
+                ‹
+            </button>
+
+            <button
+                class="slider-button"
+                id="stillNext">
+                ›
+            </button>
+
+        </div>
+
     </div>
 
-    <div class="booking-box">
-        <div id="alert-message" class="alert"></div>
+    <div
+        class="horizontal-slider"
+        id="stillSlider">
 
-        <form id="booking-form">
-            <div class="form-group">
-                <label>FULL NAME</label>
-                <input type="text" id="client-name" placeholder="Enter full name" required>
+        <figure class="still wide">
+
+            <img
+                src="assets/reference-1.png"
+                alt="Golden Hour">
+
+            <figcaption class="still-caption">
+
+                <strong>
+                    Golden Hour
+                </strong>
+
+                <span>
+                    WEDDING · PORTRAIT
+                </span>
+
+            </figcaption>
+
+        </figure>
+
+        <figure class="still">
+
+            <img
+                src="assets/reference-3.png"
+                alt="The Bride">
+
+            <figcaption class="still-caption">
+
+                <strong>
+                    The Bride
+                </strong>
+
+                <span>
+                    WEDDING
+                </span>
+
+            </figcaption>
+
+        </figure>
+
+        <figure class="still">
+
+            <img
+                src="assets/reference-4.png"
+                alt="Tradition">
+
+            <figcaption class="still-caption">
+
+                <strong>
+                    Tradition
+                </strong>
+
+                <span>
+                    EVENT
+                </span>
+
+            </figcaption>
+
+        </figure>
+
+        <figure class="still wide">
+
+            <img
+                src="assets/reference-5.png"
+                alt="Afterglow">
+
+            <figcaption class="still-caption">
+
+                <strong>
+                    Afterglow
+                </strong>
+
+                <span>
+                    PORTRAIT
+                </span>
+
+            </figcaption>
+
+        </figure>
+
+    </div>
+
+</section>
+
+<!-- =====================================================
+     STUDIO
+===================================================== -->
+
+<section
+    class="section studio"
+    id="studio">
+
+    <div class="studio-grid">
+
+        <div class="reveal">
+
+            <div class="section-kicker">
+
+                <i></i>
+
+                THE STUDIO
+
             </div>
 
-            <div class="form-group">
-                <label>EMAIL ADDRESS</label>
-                <input type="email" id="client-email" placeholder="Enter email address" required>
+            <h2>
+
+                Every frame is built
+
+                <span>
+                    before
+                </span>
+
+                the shutter ever opens.
+
+            </h2>
+
+            <p class="studio-text">
+
+                We treat your day like a film — planned,
+                lit, and crafted.
+
+                From a single portrait to a three-day
+                wedding, AD Pictures directs light,
+                mood and story.
+
+                Based at Bole Medhanialem,
+                working across Ethiopia and beyond.
+
+            </p>
+
+            <div class="stats">
+
+                <div class="stat">
+
+                    <strong
+                        data-count="78">
+                        0
+                    </strong>
+
+                    <span>
+                        K+
+                    </span>
+
+                    <small class="stat-label">
+                        COMMUNITY
+                    </small>
+
+                </div>
+
+                <div class="stat">
+
+                    <strong
+                        data-count="3600">
+                        0
+                    </strong>
+
+                    <span>
+                        +
+                    </span>
+
+                    <small class="stat-label">
+                        STORIES TOLD
+                    </small>
+
+                </div>
+
+                <div class="stat">
+
+                    <strong
+                        data-count="10">
+                        0
+                    </strong>
+
+                    <span>
+                        +
+                    </span>
+
+                    <small class="stat-label">
+                        YEARS BEHIND THE LENS
+                    </small>
+
+                </div>
+
             </div>
 
-            <div class="form-group">
-                <label>PRODUCTION SERVICE</label>
-                <select id="client-service">
-                    <option>Cinematic Wedding Films</option>
-                    <option>Commercial & Brand Stills</option>
-                    <option>Event & Mels Coverage</option>
+        </div>
+
+        <div class="studio-photo reveal">
+
+            <img
+                src="assets/reference-5.png"
+                alt="AD Pictures">
+
+            <div class="photo-label">
+                AD / 2026
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =====================================================
+     EDIT BAY
+===================================================== -->
+
+<section class="section">
+
+    <div class="section-header reveal">
+
+        <div>
+
+            <div class="section-kicker">
+
+                <i></i>
+
+                FROM THE EDIT BAY
+
+            </div>
+
+            <h2>
+                More moments.
+            </h2>
+
+            <p class="section-description">
+
+                A rolling reel of weddings,
+                send-offs and events —
+                fresh from the timeline.
+
+            </p>
+
+        </div>
+
+        <div class="slider-buttons">
+
+            <button
+                class="slider-button"
+                id="editPrev">
+                ‹
+            </button>
+
+            <button
+                class="slider-button"
+                id="editNext">
+                ›
+            </button>
+
+        </div>
+
+    </div>
+
+    <div
+        class="horizontal-slider"
+        id="editSlider">
+
+        <div class="edit-card">
+
+            <img
+                src="assets/reference-6.png"
+                alt="The Veil">
+
+            <span class="edit-number">
+                REEL · 01
+            </span>
+
+            <b class="edit-title">
+                The Veil
+            </b>
+
+        </div>
+
+        <div class="edit-card">
+
+            <img
+                src="assets/reference-4.png"
+                alt="Habesha">
+
+            <span class="edit-number">
+                REEL · 02
+            </span>
+
+            <b class="edit-title">
+                Habesha
+            </b>
+
+        </div>
+
+        <div class="edit-card">
+
+            <img
+                src="assets/reference-3.png"
+                alt="The Bride">
+
+            <span class="edit-number">
+                REEL · 03
+            </span>
+
+            <b class="edit-title">
+                The Bride
+            </b>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =====================================================
+     CONTACT
+===================================================== -->
+
+<section
+    class="section contact"
+    id="contact">
+
+    <div class="contact-box reveal">
+
+        <div class="section-kicker">
+
+            <i></i>
+
+            LET'S MAKE IT MOVING
+
+        </div>
+
+        <h2>
+
+            Your story deserves
+
+            <span>
+                the cinema treatment.
+            </span>
+
+        </h2>
+
+        <p class="contact-intro">
+
+            Tell us your date, location and what
+            you're planning.
+
+            We'll get back to you with availability
+            and a tailored package.
+
+        </p>
+
+        <form id="contactForm">
+
+            <div class="form-row">
+
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Your name"
+                    required>
+
+                <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Phone / WhatsApp"
+                    required>
+
+            </div>
+
+            <div class="form-row">
+
+                <select name="service">
+
+                    <option>
+                        Wedding Film
+                    </option>
+
+                    <option>
+                        Event Film
+                    </option>
+
+                    <option>
+                        Portrait Session
+                    </option>
+
+                    <option>
+                        Photography + Film
+                    </option>
+
                 </select>
+
+                <input
+                    type="date"
+                    name="date">
+
             </div>
 
-            <div class="form-group">
-                <label>SHOOT DATE (RESERVED GREYED OUT)</label>
-                <input type="text" id="datepicker" placeholder="Select date..." required readonly>
-            </div>
+            <textarea
+                name="message"
+                rows="5"
+                placeholder="Tell us about your event...">
+            </textarea>
 
-            <div class="form-group">
-                <label>PRODUCTION NOTES</label>
-                <textarea id="client-notes" rows="4" placeholder="Venue & production requirements..."></textarea>
-            </div>
+            <button
+                class="primary-btn form-button"
+                type="submit">
 
-            <button type="submit" class="btn-submit">Confirm Reservation</button>
+                SEND ENQUIRY ↗
+
+            </button>
+
+            <small
+                class="form-message"
+                id="formMessage">
+            </small>
+
         </form>
+
     </div>
+
 </section>
 
-<div class="modal" id="video-modal">
-    <span class="close-modal" id="close-modal">&times;</span>
-    <div class="modal-content">
-        <div class="modal-video-wrapper">
-            <iframe id="modal-iframe" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-        </div>
-    </div>
-</div>
+</main>
 
-<a href="https://wa.me/251908030809?text=Hello%20AD%20Pictures," class="whatsapp-float" target="_blank" aria-label="WhatsApp">
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.758.459 3.474 1.33 4.988l-1.416 5.171 5.293-1.389c1.458.796 3.102 1.216 4.78 1.217h.004c5.507 0 9.99-4.478 9.99-9.985 0-2.667-1.037-5.176-2.922-7.062-1.886-1.886-4.394-2.924-7.069-2.924zm5.814 14.182c-.252.707-1.473 1.353-2.023 1.411-.518.055-1.196.082-3.418-.838-2.589-1.072-4.228-3.732-4.357-3.905-.129-.173-1.053-1.401-1.053-2.667 0-1.267.662-1.889.897-2.146.235-.257.514-.322.686-.322.172 0 .344.002.493.009.157.007.368-.06.576.438.214.512.729 1.777.793 1.906.064.129.107.279.021.451-.086.172-.129.279-.257.429-.129.15-.271.335-.387.45-.129.129-.264.27-.114.528.15.257.666 1.098 1.428 1.777.98.874 1.806 1.146 2.064 1.275.257.129.408.107.558-.064.15-.172.643-.75.814-1.007.172-.257.343-.214.579-.129.236.086 1.499.707 1.756.836.257.129.429.193.493.301.064.108.064.621-.188 1.328z"/></svg>
-</a>
+<!-- =====================================================
+     FOOTER
+===================================================== -->
 
 <footer>
-    <p>&copy; <span id="year"></span> AD PICTURES FILM STUDIO · LOCATION: Awlo Business Center, 3rd Floor, Bole Medhanialem, Addis Ababa · TEL: +251 908 030 809</p>
+
+    <div>
+
+        <div class="footer-logo">
+
+            AD<span>PICTURES</span>
+
+        </div>
+
+        <div class="footer-category">
+
+            WEDDING · EVENT · PORTRAIT
+
+        </div>
+
+    </div>
+
+    <div class="footer-links">
+
+        <a href="#films">
+            Films
+        </a>
+
+        <a href="#stills">
+            Stills
+        </a>
+
+        <a href="#studio">
+            Studio
+        </a>
+
+        <a href="#contact">
+            Contact
+        </a>
+
+    </div>
+
+    <small>
+        © 2026 AD Pictures
+    </small>
+
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<!-- =====================================================
+     WHATSAPP
+===================================================== -->
+
+<a
+    class="whatsapp"
+    href="https://wa.me/251900000000?text=Hello%20AD%20Pictures%2C%20I%20want%20to%20book%20a%20shoot."
+    target="_blank"
+    aria-label="WhatsApp">
+
+    ◉
+
+</a>
+
+<!-- =====================================================
+     BACK TO TOP
+===================================================== -->
+
+<button
+    class="back-top"
+    id="backTop">
+
+    ↑
+
+</button>
+
+<!-- =====================================================
+     REEL MODAL
+===================================================== -->
+
+<div
+    class="modal"
+    id="modal">
+
+    <div
+        class="modal-background"
+        id="modalBackground">
+    </div>
+
+    <div class="modal-box">
+
+        <button
+            class="modal-close"
+            id="modalClose">
+
+            ×
+
+        </button>
+
+        <img
+            class="modal-image"
+            id="modalImage"
+            src=""
+            alt="">
+
+        <div class="modal-info">
+
+            <span
+                class="modal-type"
+                id="modalType">
+            </span>
+
+            <h3
+                class="modal-title"
+                id="modalTitle">
+            </h3>
+
+            <p class="modal-description">
+
+                Cinematic wedding and event
+                film by AD Pictures.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    // 1. Dynamic Year Footer
-    document.getElementById("year").textContent = new Date().getFullYear();
 
-    // 2. Transformed Static Data from PHP
-    const services = [
-        {
-            badge: "4K · 24FPS · T2.1 CINEMA LENS",
-            title: "Cinematic Wedding Films",
-            price: "Full Day Directing",
-            description: "Directed, lit, and cut like a film — capturing authentic emotion from first light to final dance."
-        },
-        {
-            badge: "35MM · f/1.4 · HDR STILLS",
-            title: "Commercial & Brand Stills",
-            price: "Campaign Production",
-            description: "High-impact editorial imagery and video campaigns crafted to elevate luxury brand identity."
-        },
-        {
-            badge: "RAW · MULTI-CAM RIG",
-            title: "Event & Mels Coverage",
-            price: "Multi-Day Package",
-            description: "High-energy multi-camera event recording utilizing dynamic ambient lighting setups."
-        }
-    ];
+/* =========================================================
+   LOADER
+========================================================= */
 
-    const reels = [
-        {
-            meta: "4K · 24FPS · CINEMA SCOPE",
-            title: "THE VOW",
-            type: "Wedding Film",
-            image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80",
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-        },
-        {
-            meta: "35MM · HIGH DYNAMIC RANGE",
-            title: "GRAND ENTRANCE",
-            type: "Event Film",
-            image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80",
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-        },
-        {
-            meta: "50MM · T1.5 SOFT LIGHTING",
-            title: "MELS NIGHT",
-            type: "Cultural Film",
-            image: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=80",
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-        }
-    ];
+window.addEventListener("load",function(){
 
-    // Array simulating booked dates database
-    let bookedDates = ["2026-09-05", "2026-09-12"];
+    setTimeout(function(){
 
-    // 3. Render Reels Grid
-    const reelsContainer = document.getElementById("reels-container");
-    reels.forEach(r => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-            <div class="card-img-wrapper">
-                <img src="${r.image}" class="card-img" alt="${r.title}">
-                <div class="play-overlay">
-                    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="card-meta">${r.meta}</div>
-                <h3>${r.title}</h3>
-                <p style="color: var(--text-muted); font-size: 14px;">${r.type}</p>
-            </div>
-        `;
-        card.addEventListener("click", () => openModal(r.videoUrl));
-        reelsContainer.appendChild(card);
-    });
+        document
+            .getElementById("loader")
+            .classList
+            .add("hide");
 
-    // 4. Render Services Grid
-    const servicesContainer = document.getElementById("services-container");
-    services.forEach(s => {
-        const card = document.createElement("div");
-        card.className = "card card-body";
-        card.innerHTML = `
-            <div class="card-meta">${s.badge}</div>
-            <h3>${s.title}</h3>
-            <p style="color: var(--text-muted); font-size: 14px; margin-top: 10px;">${s.description}</p>
-        `;
-        servicesContainer.appendChild(card);
-    });
+    },700);
 
-    // 5. Lightbox Modal Logic
-    const modal = document.getElementById("video-modal");
-    const modalIframe = document.getElementById("modal-iframe");
-    const closeModalBtn = document.getElementById("close-modal");
-
-    function openModal(url) {
-        modalIframe.src = url;
-        modal.classList.add("active");
-    }
-
-    closeModalBtn.addEventListener("click", () => {
-        modal.classList.remove("active");
-        modalIframe.src = "";
-    });
-
-    modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-            modal.classList.remove("active");
-            modalIframe.src = "";
-        }
-    });
-
-    // 6. Flatpickr Setup
-    let picker = flatpickr("#datepicker", {
-        dateFormat: "Y-m-d",
-        minDate: "today",
-        disable: bookedDates,
-        locale: { firstDayOfWeek: 1 }
-    });
-
-    // 7. Interactive JS Booking Submission (Replaces PHP POST)
-    const bookingForm = document.getElementById("booking-form");
-    const alertBox = document.getElementById("alert-message");
-
-    bookingForm.addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const name = document.getElementById("client-name").value.trim();
-        const email = document.getElementById("client-email").value.trim();
-        const selectedDate = document.getElementById("datepicker").value;
-
-        if (name && email && selectedDate) {
-            if (bookedDates.includes(selectedDate)) {
-                alertBox.className = "alert alert-error";
-                alertBox.textContent = `Date (${selectedDate}) is reserved. Pick another date.`;
-                alertBox.style.display = "block";
-            } else {
-                bookedDates.push(selectedDate);
-                
-                // Re-initialize picker with updated disabled dates
-                picker.set('disable', bookedDates);
-
-                alertBox.className = "alert alert-success";
-                alertBox.textContent = `Session date reserved for ${selectedDate}!`;
-                alertBox.style.display = "block";
-
-                bookingForm.reset();
-            }
-        } else {
-            alertBox.className = "alert alert-error";
-            alertBox.textContent = "Please complete all required fields.";
-            alertBox.style.display = "block";
-        }
-    });
-
-    // 8. Three.js 3D Cinema Camera Engine Setup
-    const container = document.getElementById('three-canvas');
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 12;
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
-
-    // Group to hold the 3D Camera Assembly
-    const cameraGroup = new THREE.Group();
-
-    // Materials
-    const goldMaterial = new THREE.MeshStandardMaterial({
-        color: 0xe2b13c,
-        metalness: 0.9,
-        roughness: 0.2
-    });
-
-    const darkMetal = new THREE.MeshStandardMaterial({
-        color: 0x111113,
-        metalness: 0.75,
-        roughness: 0.28
-    });
-
-    const bodyMaterial = new THREE.MeshStandardMaterial({
-        color: 0x1c1c1f,
-        metalness: 0.6,
-        roughness: 0.35
-    });
-
-    const glassMaterial = new THREE.MeshStandardMaterial({
-        color: 0x0a0e14,
-        metalness: 0.3,
-        roughness: 0.05,
-        emissive: 0x0d1b2a,
-        emissiveIntensity: 0.4
-    });
-
-    // Main camera body block
-    const bodyGeo = new THREE.BoxGeometry(3.6, 2.3, 2.0);
-    const body = new THREE.Mesh(bodyGeo, bodyMaterial);
-    cameraGroup.add(body);
-
-    // Gold trim strip around body
-    const trimGeo = new THREE.BoxGeometry(3.68, 0.35, 2.08);
-    const trim = new THREE.Mesh(trimGeo, goldMaterial);
-    trim.position.y = 0.55;
-    cameraGroup.add(trim);
-
-    // Lens mount ring (front, dark metal)
-    const mountGeo = new THREE.CylinderGeometry(1.0, 1.0, 0.3, 48);
-    const mount = new THREE.Mesh(mountGeo, darkMetal);
-    mount.rotation.x = Math.PI / 2;
-    mount.position.set(0, -0.1, 1.15);
-    cameraGroup.add(mount);
-
-    // Lens barrel (gold, stepped cylinder)
-    const barrelOuterGeo = new THREE.CylinderGeometry(0.85, 0.9, 1.6, 48);
-    const barrelOuter = new THREE.Mesh(barrelOuterGeo, goldMaterial);
-    barrelOuter.rotation.x = Math.PI / 2;
-    barrelOuter.position.set(0, -0.1, 2.05);
-    cameraGroup.add(barrelOuter);
-
-    // Lens barrel grip rings
-    for (let i = 0; i < 3; i++) {
-        const ringGeo = new THREE.TorusGeometry(0.92, 0.05, 12, 48);
-        const ring = new THREE.Mesh(ringGeo, darkMetal);
-        ring.position.set(0, -0.1, 1.55 + i * 0.5);
-        cameraGroup.add(ring);
-    }
-
-    // Front glass lens element
-    const glassGeo = new THREE.CylinderGeometry(0.62, 0.62, 0.12, 48);
-    const glass = new THREE.Mesh(glassGeo, glassMaterial);
-    glass.rotation.x = Math.PI / 2;
-    glass.position.set(0, -0.1, 2.86);
-    cameraGroup.add(glass);
-
-    // Top viewfinder / handle housing
-    const finderGeo = new THREE.BoxGeometry(1.1, 0.55, 1.1);
-    const finder = new THREE.Mesh(finderGeo, darkMetal);
-    finder.position.set(-0.6, 1.4, -0.2);
-    cameraGroup.add(finder);
-
-    // Top gold record indicator button
-    const buttonGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.1, 24);
-    const button = new THREE.Mesh(buttonGeo, goldMaterial);
-    button.position.set(1.3, 1.18, 0.3);
-    cameraGroup.add(button);
-
-    // Side handle grip (gold accent bar)
-    const handleGeo = new THREE.BoxGeometry(0.18, 1.6, 0.3);
-    const handle = new THREE.Mesh(handleGeo, goldMaterial);
-    handle.position.set(-1.95, 0.1, 0.2);
-    cameraGroup.add(handle);
-
-    // Small top antenna / mic accent
-    const micGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.9, 16);
-    const mic = new THREE.Mesh(micGeo, darkMetal);
-    mic.position.set(-1.4, 1.9, -0.2);
-    cameraGroup.add(mic);
-
-    // Floating Lens Particles
-    const particlesGeo = new THREE.BufferGeometry();
-    const count = 120;
-    const positions = new Float32Array(count * 3);
-
-    for (let i = 0; i < count * 3; i++) {
-        positions[i] = (Math.random() - 0.5) * 15;
-    }
-
-    particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const particlesMat = new THREE.PointsMaterial({
-        size: 0.05,
-        color: 0xe2b13c,
-        transparent: true,
-        opacity: 0.5
-    });
-
-    const particleSystem = new THREE.Points(particlesGeo, particlesMat);
-    cameraGroup.add(particleSystem);
-
-    // Position Group in Hero right side
-    cameraGroup.position.set(window.innerWidth > 992 ? 3.2 : 0, 0, 0);
-    cameraGroup.rotation.y = -0.4;
-    scene.add(cameraGroup);
-
-    // Lighting Setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-    scene.add(ambientLight);
-
-    const pointLight = new THREE.PointLight(0xe2b13c, 2.5, 50);
-    pointLight.position.set(5, 5, 8);
-    scene.add(pointLight);
-
-    const blueLight = new THREE.PointLight(0x2563eb, 1.2, 50);
-    blueLight.position.set(-8, -5, 5);
-    scene.add(blueLight);
-
-    // Mouse Cursor Movement Interactivity
-    let targetX = 0;
-    let targetY = 0;
-    let mouseX = 0;
-    let mouseY = 0;
-
-    const windowHalfX = window.innerWidth / 2;
-    const windowHalfY = window.innerHeight / 2;
-
-    document.addEventListener('mousemove', (event) => {
-        mouseX = (event.clientX - windowHalfX);
-        mouseY = (event.clientY - windowHalfY);
-    });
-
-    // Render Animation Loop
-    function animate() {
-        requestAnimationFrame(animate);
-
-        // Continuous Smooth Rotation
-        cameraGroup.rotation.y += 0.006;
-        particleSystem.rotation.y -= 0.002;
-
-        // Smooth Mouse Rotation Tracking (Lerp)
-        targetX = mouseX * 0.0008;
-        targetY = mouseY * 0.0008;
-
-        cameraGroup.rotation.x += (targetY - cameraGroup.rotation.x) * 0.05;
-        cameraGroup.rotation.z += (-targetX - cameraGroup.rotation.z) * 0.05;
-
-        renderer.render(scene, camera);
-    }
-
-    animate();
-
-    // Window Resize Handler
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        cameraGroup.position.set(window.innerWidth > 992 ? 3.2 : 0, 0, 0);
-    });
 });
+
+
+/* =========================================================
+   SCROLL PROGRESS
+========================================================= */
+
+window.addEventListener("scroll",function(){
+
+    const scrollTop =
+        window.scrollY;
+
+    const documentHeight =
+        document.documentElement.scrollHeight
+        - window.innerHeight;
+
+    const percentage =
+        (scrollTop / documentHeight) * 100;
+
+    document
+        .getElementById("progress")
+        .style.width =
+        percentage + "%";
+
+});
+
+
+/* =========================================================
+   HEADER SCROLL
+========================================================= */
+
+window.addEventListener("scroll",function(){
+
+    const header =
+        document.getElementById("header");
+
+    if(window.scrollY > 60){
+
+        header.classList.add("scrolled");
+
+    }else{
+
+        header.classList.remove("scrolled");
+
+    }
+
+});
+
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+
+const menuBtn =
+    document.getElementById("menuBtn");
+
+const mobileMenu =
+    document.getElementById("mobileMenu");
+
+menuBtn.addEventListener("click",function(){
+
+    mobileMenu.classList.toggle("open");
+
+});
+
+document
+    .querySelectorAll(".mobile-menu a")
+    .forEach(function(link){
+
+        link.addEventListener("click",function(){
+
+            mobileMenu.classList.remove("open");
+
+        });
+
+    });
+
+
+/* =========================================================
+   THEME
+========================================================= */
+
+const themeBtn =
+    document.getElementById("themeBtn");
+
+themeBtn.addEventListener("click",function(){
+
+    document.body.classList.toggle("light");
+
+    if(
+        document.body.classList.contains("light")
+    ){
+
+        themeBtn.textContent = "☾";
+
+    }else{
+
+        themeBtn.textContent = "☼";
+
+    }
+
+});
+
+
+/* =========================================================
+   HERO SLIDER
+========================================================= */
+
+const heroSlides =
+    document.querySelectorAll(".hero-slide");
+
+const heroDots =
+    document.querySelectorAll(".hero-dot");
+
+const heroTitle =
+    document.getElementById("heroTitle");
+
+const aperture =
+    document.getElementById("aperture");
+
+const titles = [
+
+    "The Wow",
+    "The Blessing",
+    "The Golden Hour"
+
+];
+
+const apertures = [
+
+    "T1.8",
+    "T2.4",
+    "T2.0"
+
+];
+
+let currentSlide = 0;
+
+let heroTimer;
+
+
+function showHero(index){
+
+    currentSlide =
+        (index + heroSlides.length)
+        % heroSlides.length;
+
+    heroSlides.forEach(
+        function(slide,i){
+
+            slide.classList.toggle(
+                "active",
+                i === currentSlide
+            );
+
+        }
+    );
+
+    heroDots.forEach(
+        function(dot,i){
+
+            dot.classList.toggle(
+                "active",
+                i === currentSlide
+            );
+
+        }
+    );
+
+    heroTitle.textContent =
+        titles[currentSlide];
+
+    aperture.textContent =
+        apertures[currentSlide];
+
+}
+
+
+function restartHero(){
+
+    clearInterval(heroTimer);
+
+    heroTimer =
+        setInterval(function(){
+
+            showHero(
+                currentSlide + 1
+            );
+
+        },5500);
+
+}
+
+
+heroDots.forEach(
+    function(dot,index){
+
+        dot.addEventListener(
+            "click",
+            function(){
+
+                showHero(index);
+
+                restartHero();
+
+            }
+        );
+
+    }
+);
+
+restartHero();
+
+
+/* =========================================================
+   MUTE BUTTON
+========================================================= */
+
+const muteBtn =
+    document.getElementById("muteBtn");
+
+muteBtn.addEventListener("click",function(){
+
+    if(
+        muteBtn.textContent === "🔇"
+    ){
+
+        muteBtn.textContent = "🔊";
+
+    }else{
+
+        muteBtn.textContent = "🔇";
+
+    }
+
+});
+
+
+/* =========================================================
+   WATCH FILMS
+========================================================= */
+
+document
+    .getElementById("watchFilms")
+    .addEventListener("click",function(){
+
+        document
+            .getElementById("films")
+            .scrollIntoView({
+                behavior:"smooth"
+            });
+
+    });
+
+
+/* =========================================================
+   SLIDER FUNCTION
+========================================================= */
+
+function moveSlider(
+    selector,
+    amount
+){
+
+    const slider =
+        document.querySelector(selector);
+
+    slider.scrollBy({
+
+        left:amount,
+
+        behavior:"smooth"
+
+    });
+
+}
+
+
+/* REELS */
+
+document
+    .getElementById("reelNext")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#reelSlider",
+            440
+        );
+
+    });
+
+document
+    .getElementById("reelPrev")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#reelSlider",
+            -440
+        );
+
+    });
+
+
+/* STILLS */
+
+document
+    .getElementById("stillNext")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#stillSlider",
+            600
+        );
+
+    });
+
+document
+    .getElementById("stillPrev")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#stillSlider",
+            -600
+        );
+
+    });
+
+
+/* EDIT */
+
+document
+    .getElementById("editNext")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#editSlider",
+            360
+        );
+
+    });
+
+document
+    .getElementById("editPrev")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#editSlider",
+            -360
+        );
+
+    });
+
+
+/* =========================================================
+   REEL MODAL
+========================================================= */
+
+const modal =
+    document.getElementById("modal");
+
+const modalImage =
+    document.getElementById("modalImage");
+
+const modalTitle =
+    document.getElementById("modalTitle");
+
+const modalType =
+    document.getElementById("modalType");
+
+const modalClose =
+    document.getElementById("modalClose");
+
+const modalBackground =
+    document.getElementById("modalBackground");
+
+
+document
+    .querySelectorAll(".reel")
+    .forEach(function(reel){
+
+        reel.addEventListener(
+            "click",
+            function(){
+
+                modalImage.src =
+                    reel.dataset.image;
+
+                modalTitle.textContent =
+                    reel.dataset.title;
+
+                modalType.textContent =
+                    reel.dataset.type;
+
+                modal.classList.add("open");
+
+                document.body.style.overflow =
+                    "hidden";
+
+            }
+        );
+
+    });
+
+
+function closeModal(){
+
+    modal.classList.remove("open");
+
+    document.body.style.overflow =
+        "";
+
+}
+
+
+modalClose.addEventListener(
+    "click",
+    closeModal
+);
+
+modalBackground.addEventListener(
+    "click",
+    closeModal
+);
+
+
+document.addEventListener(
+    "keydown",
+    function(event){
+
+        if(event.key === "Escape"){
+
+            closeModal();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   SCROLL REVEAL
+========================================================= */
+
+const revealObserver =
+    new IntersectionObserver(
+        function(entries){
+
+            entries.forEach(
+                function(entry){
+
+                    if(
+                        entry.isIntersecting
+                    ){
+
+                        entry.target
+                            .classList
+                            .add("visible");
+
+                    }
+
+                }
+            );
+
+        },
+        {
+            threshold:.15
+        }
+    );
+
+
+document
+    .querySelectorAll(".reveal")
+    .forEach(function(element){
+
+        revealObserver.observe(element);
+
+    });
+
+
+/* =========================================================
+   NUMBER COUNTERS
+========================================================= */
+
+const counterObserver =
+    new IntersectionObserver(
+        function(entries){
+
+            entries.forEach(
+                function(entry){
+
+                    if(
+                        !entry.isIntersecting
+                    ){
+
+                        return;
+
+                    }
+
+                    const element =
+                        entry.target;
+
+                    if(
+                        element.dataset.done
+                    ){
+
+                        return;
+
+                    }
+
+                    element.dataset.done =
+                        "true";
+
+                    const target =
+                        Number(
+                            element.dataset.count
+                        );
+
+                    let start =
+                        0;
+
+                    const duration =
+                        1500;
+
+                    const startTime =
+                        performance.now();
+
+
+                    function animate(
+                        currentTime
+                    ){
+
+                        const progress =
+                            Math.min(
+                                (currentTime - startTime)
+                                / duration,
+                                1
+                            );
+
+                        const eased =
+                            1 -
+                            Math.pow(
+                                1-progress,
+                                3
+                            );
+
+                        const value =
+                            Math.floor(
+                                target * eased
+                            );
+
+                        element.textContent =
+                            value.toLocaleString();
+
+                        if(
+                            progress < 1
+                        ){
+
+                            requestAnimationFrame(
+                                animate
+                            );
+
+                        }
+
+                    }
+
+                    requestAnimationFrame(
+                        animate
+                    );
+
+                }
+            );
+
+        },
+        {
+            threshold:.5
+        }
+    );
+
+
+document
+    .querySelectorAll("[data-count]")
+    .forEach(function(counter){
+
+        counterObserver.observe(counter);
+
+    });
+
+
+/* =========================================================
+   CONTACT FORM
+========================================================= */
+
+const contactForm =
+    document.getElementById("contactForm");
+
+const formMessage =
+    document.getElementById("formMessage");
+
+
+contactForm.addEventListener(
+    "submit",
+    function(event){
+
+        event.preventDefault();
+
+        const formData =
+            new FormData(contactForm);
+
+        const name =
+            formData.get("name");
+
+        const phone =
+            formData.get("phone");
+
+        const service =
+            formData.get("service");
+
+        const date =
+            formData.get("date");
+
+        const message =
+            formData.get("message");
+
+
+        const whatsappMessage =
+
+`Hello AD Pictures!
+
+Name: ${name}
+
+Phone: ${phone}
+
+Service: ${service}
+
+Date: ${date || "Not specified"}
+
+Message:
+${message || "No additional message."}`;
+
+
+        const whatsappURL =
+            "https://wa.me/251900000000?text="
+            +
+            encodeURIComponent(
+                whatsappMessage
+            );
+
+
+        formMessage.textContent =
+            "Opening WhatsApp...";
+
+
+        window.open(
+            whatsappURL,
+            "_blank"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   BACK TO TOP
+========================================================= */
+
+const backTop =
+    document.getElementById("backTop");
+
+
+window.addEventListener(
+    "scroll",
+    function(){
+
+        if(window.scrollY > 600){
+
+            backTop.classList.add("show");
+
+        }else{
+
+            backTop.classList.remove("show");
+
+        }
+
+    }
+);
+
+
+backTop.addEventListener(
+    "click",
+    function(){
+
+        window.scrollTo({
+
+            top:0,
+
+            behavior:"smooth"
+
+        });
+
+    }
+);
+
+
+/* =========================================================
+   MAGNETIC BUTTON EFFECT
+========================================================= */
+
+if(
+    window.matchMedia(
+        "(pointer:fine)"
+    ).matches
+){
+
+    document
+        .querySelectorAll(
+            ".primary-btn,.secondary-btn,.book-btn"
+        )
+        .forEach(function(button){
+
+            button.addEventListener(
+                "mousemove",
+                function(event){
+
+                    const rect =
+                        button.getBoundingClientRect();
+
+                    const x =
+                        event.clientX
+                        -
+                        rect.left
+                        -
+                        rect.width / 2;
+
+                    const y =
+                        event.clientY
+                        -
+                        rect.top
+                        -
+                        rect.height / 2;
+
+                    button.style.transform =
+                        `translate(${x*.08}px,${y*.08}px)`;
+
+                }
+            );
+
+
+            button.addEventListener(
+                "mouseleave",
+                function(){
+
+                    button.style.transform =
+                        "";
+
+                }
+            );
+
+        });
+
+}
+
+
+/* =========================================================
+   KEYBOARD SLIDER SUPPORT
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(event){
+
+        if(event.key === "ArrowRight"){
+
+            moveSlider(
+                "#reelSlider",
+                440
+            );
+
+        }
+
+        if(event.key === "ArrowLeft"){
+
+            moveSlider(
+                "#reelSlider",
+                -440
+            );
+
+        }
+
+    }
+);
+
 </script>
 
 </body>
