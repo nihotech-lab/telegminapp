@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>የምዝገባ ቅጽ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800">ይመዝገቡ</h1>
+        <form action="/register" method="POST">
+            <div class="mb-4">
+                <label for="name" class="block text-gray-700 font-bold mb-2">ስም፡</label>
+                <input type="text" id="name" name="name" class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500" required>
+            </div>
+            <div class="mb-4">
+                <label for="grade" class="block text-gray-700 font-bold mb-2">ክፍል፡</label>
+                <input type="text" id="grade" name="grade" class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500" required>
+            </div>
+            <div class="mb-4">
+                <label for="projects" class="block text-gray-700 font-bold mb-2">ፕሮጀክት፡</label>
+                <textarea id="projects" name="projects" class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500" required></textarea>
+            </div>
+            <div class="mb-4">
+                <label for="goals" class="block text-gray-700 font-bold mb-2">ግብ፡</label>
+                <textarea id="goals" name="goals" class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500" required></textarea>
+            </div>
+            <div class="mb-4">
+    <label for="screenshot" class="block text-gray-700 font-bold mb-2">የክፍያ ስክሪን ሻት፡</label>
+    <input type="file" id="screenshot" name="screenshot" class="w-full border border-gray-300 p-2 rounded" required>
+</div>
+    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 focus:outline-none">ይመዝገቡ</button>
+        </form>
+    </div>
+</body>
+</html>

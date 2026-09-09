@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADI PICTURES — Cinematic Wedding & Event Films</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* =====================================================
+           DESIGN SYSTEM & VARIABLES
+        ===================================================== */
+        :root {
+            --bg-dark: #0a0a0c;
+            --bg-card: #121216;
+            --bg-card-hover: #1a1a22;
+            --text-main: #f3f3f6;
+            --text-muted: #a0a0ab;
+            --accent-gold: #d4af37;
+            --accent-gold-glow: rgba(212, 175, 55, 0.25);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --font-heading: 'Cinzel', serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --container-width: 1280px;
+        }
+
+        body.light {
+            --bg-dark: #f8f8fa;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f0f0f5;
+            --text-main: #111116;
+            --text-muted: #666673;
+            --border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        /* Base Resets */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
+
+        /* =====================================================
+           LAYOUT & REUSABLE COMPONENTS
+        ===================================================== */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent-gold);
+            z-index: 1000;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* Loader */
+        .loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-heading);
+            letter-spacing: 4px;
+            font-size: 1.2rem;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        .loader.hide {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Header / Nav */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 900;
+            transition: var(--transition-smooth);
+        }
+        header.scrolled {
+            background: rgba(10, 10, 12, 0.85);
+            backdrop-filter: blur(12px);
+            padding: 15px 40px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        .logo span {
+            color: var(--accent-gold);
+        }
+
+        nav {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        nav a {
+            font-size: 0.85rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: var(--transition-smooth);
+        }
+        nav a:hover {
+            color: var(--accent-gold);
+        }
+
+        .theme-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .theme-btn:hover {
+            border-color: var(--accent-gold);
+        }
+
+        .menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Mobile Nav */
+        .mobile-menu {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-dark);
+            z-index: 850;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            transform: translateY(-100%);
+            transition: var(--transition-smooth);
+        }
+        .mobile-menu.open {
+            transform: translateY(0);
+        }
+        .mobile-menu a {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+        }
+
+        /* Sections General */
+        .section {
+            padding: 120px 40px;
+            max-width: var(--container-width);
+            margin: 0 auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 60px;
+        }
+
+        .section-kicker {
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .section-kicker i {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        h2 {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+        h2 span {
+            font-style: italic;
+            color: var(--accent-gold);
+        }
+
+        .section-description {
+            color: var(--text-muted);
+            margin-top: 10px;
+            font-size: 0.95rem;
+        }
+
+        /* Buttons */
+        .primary-btn {
+            background: var(--accent-gold);
+            color: #000;
+            border: none;
+            padding: 14px 28px;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: inline-block;
+        }
+        .primary-btn:hover {
+            box-shadow: 0 0 20px var(--accent-gold-glow);
+            transform: translateY(-2px);
+        }
+
+        .slider-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .slider-button {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            font-size: 1.2rem;
+        }
+        .slider-button:hover {
+            background: var(--accent-gold);
+            color: #000;
+        }
+
+        /* Horizontal Slider Layout */
+        .horizontal-slider {
+            display: flex;
+            gap: 30px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding-bottom: 20px;
+            scrollbar-width: none;
+        }
+        .horizontal-slider::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Reveal animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* =====================================================
+           HERO SECTION
+        ===================================================== */
+        .hero {
+            position: relative;
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
+            transform: scale(1.05);
+        }
+        .hero-slide.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .hero-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.4);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            max-width: 800px;
+            padding: 0 20px;
+        }
+        .hero-content h1 {
+            font-family: var(--font-heading);
+            font-size: 4rem;
+            font-weight: 400;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+        }
+        .hero-meta {
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            color: var(--accent-gold);
+            margin-bottom: 30px;
+        }
+
+        .hero-dots {
+            position: absolute;
+            bottom: 40px;
+            display: flex;
+            gap: 12px;
+            z-index: 10;
+        }
+        .hero-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid var(--text-main);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .hero-dot.active {
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+        }
+
+        /* =====================================================
+           REELS / FILMS SECTION
+        ===================================================== */
+        .reel {
+            min-width: 320px;
+            width: 320px;
+            scroll-snap-align: start;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+        .reel:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-gold);
+        }
+        .reel img {
+            height: 420px;
+            width: 100%;
+            transition: var(--transition-smooth);
+        }
+        .reel:hover img {
+            transform: scale(1.05);
+        }
+        .reel-info {
+            padding: 20px;
+            background: var(--bg-card);
+        }
+        .reel-info h3 {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        .reel-info p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* =====================================================
+           STILLS SECTION
+        ===================================================== */
+        .still {
+            min-width: 350px;
+            scroll-snap-align: start;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        .still.wide {
+            min-width: 550px;
+        }
+        .still img {
+            height: 380px;
+            width: 100%;
+            transition: var(--transition-smooth);
+        }
+        .still:hover img {
+            transform: scale(1.03);
+        }
+        .still-caption {
+            position: absolute;
+            bottom: 0;
+            inset-x: 0;
+            padding: 20px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.85));
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .still-caption strong {
+            font-family: var(--font-heading);
+            font-weight: 400;
+        }
+        .still-caption span {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: var(--accent-gold);
+        }
+
+        /* =====================================================
+           STUDIO SECTION
+        ===================================================== */
+        .studio-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .studio-text {
+            color: var(--text-muted);
+            margin: 20px 0 40px;
+            font-size: 1.05rem;
+        }
+        .stats {
+            display: flex;
+            gap: 40px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+        .stat strong {
+            font-family: var(--font-heading);
+            font-size: 2.2rem;
+            color: var(--accent-gold);
+            display: block;
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        .studio-photo {
+            position: relative;
+        }
+        .studio-photo img {
+            border: 1px solid var(--border-color);
+            height: 500px;
+            width: 100%;
+        }
+        .photo-label {
+            position: absolute;
+            bottom: -20px;
+            right: -20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 15px 25px;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+        }
+
+        /* =====================================================
+           EDIT BAY SECTION
+        ===================================================== */
+        .edit-card {
+            min-width: 300px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            position: relative;
+        }
+        .edit-card img {
+            height: 200px;
+            margin-bottom: 20px;
+        }
+        .edit-number {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            color: var(--accent-gold);
+            opacity: 0.5;
+        }
+        .edit-title {
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+
+        /* =====================================================
+           CONTACT SECTION
+        ===================================================== */
+        .contact-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 60px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .contact-intro {
+            color: var(--text-muted);
+            margin: 15px 0 40px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        input, select, textarea {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            color: var(--text-main);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-gold);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        select option {
+            background: var(--bg-card);
+            color: var(--text-main);
+        }
+
+        .form-button {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .form-message {
+            color: var(--accent-gold);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        /* =====================================================
+           FOOTER & FLOATING CONTROLS
+        ===================================================== */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 60px 40px;
+            max-width: var(--container-width);
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .footer-logo {
+            font-family: var(--font-heading);
+            color: var(--text-main);
+            font-size: 1.2rem;
+        }
+        .footer-logo span { color: var(--accent-gold); }
+        .footer-category { font-size: 0.7rem; letter-spacing: 2px; }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+        .footer-links a:hover { color: var(--accent-gold); }
+
+        .whatsapp {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #25d366;
+            color: #fff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 800;
+        }
+
+        .back-top {
+            position: fixed;
+            bottom: 90px;
+            right: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 800;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition-smooth);
+        }
+        .back-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* =====================================================
+           MODAL
+        ===================================================== */
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition-smooth);
+        }
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-background {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
+        }
+        .modal-box {
+            position: relative;
+            z-index: 10;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            max-width: 800px;
+            width: 90%;
+            overflow: hidden;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 20;
+        }
+        .modal-image {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+        }
+        .modal-info {
+            padding: 30px;
+        }
+        .modal-type {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: var(--accent-gold);
+        }
+        .modal-title {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            margin: 5px 0 10px;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 900px) {
+            .studio-grid, .form-row { grid-template-columns: 1fr; }
+            .hero-content h1 { font-size: 2.5rem; }
+            nav { display: none; }
+            .menu-btn { display: block; }
+            .section { padding: 80px 20px; }
+            .contact-box { padding: 30px 20px; }
+            footer { flex-direction: column; gap: 20px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-bar" id="progress"></div>
+
+<!-- Loader -->
+<div class="loader" id="loader">
+    ADI PICTURES
+</div>
+
+<!-- Navigation Header -->
+<header id="header">
+    <div class="logo">ADI <span>PICTURES</span></div>
+    
+    <nav>
+        <a href="#films">Films</a>
+        <a href="#stills">Stills</a>
+        <a href="#studio">Studio</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <button class="theme-btn" id="themeBtn" title="Toggle Light/Dark Theme">☼</button>
+        <button class="menu-btn" id="menuBtn">☰</button>
+    </div>
+</header>
+
+<!-- Mobile Navigation Menu -->
+<div class="mobile-menu" id="mobileMenu">
+    <a href="#films">Films</a>
+    <a href="#stills">Stills</a>
+    <a href="#studio">Studio</a>
+    <a href="#contact">Contact</a>
+</div>
+
+<main>
+    <!-- Hero Slider -->
+    <section class="hero">
+        <div class="hero-slide active">
+            <img src="https://picsum.photos/id/1059/1600/900" alt="Cinematic Hero 1">
+        </div>
+        <div class="hero-slide">
+            <img src="https://picsum.photos/id/1062/1600/900" alt="Cinematic Hero 2">
+        </div>
+        <div class="hero-slide">
+            <img src="https://picsum.photos/id/1025/1600/900" alt="Cinematic Hero 3">
+        </div>
+
+        <div class="hero-content">
+            <div class="hero-meta">APERTURE <span id="aperture">T1.8</span> · CINEMATIC NARRATIVE</div>
+            <h1 id="heroTitle">The Wow</h1>
+            <button class="primary-btn" id="watchFilms">Explore Films</button>
+        </div>
+
+        <div class="hero-dots">
+            <div class="hero-dot active" data-slide="0"></div>
+            <div class="hero-dot" data-slide="1"></div>
+            <div class="hero-dot" data-slide="2"></div>
+        </div>
+    </section>
+
+    <!-- Films Section -->
+    <section class="section" id="films">
+        <div class="section-header reveal">
+            <div>
+                <div class="section-kicker"><i></i> FEATURED REELS</div>
+                <h2>Cinematic Works.</h2>
+                <p class="section-description">A selection of curated wedding and event narratives.</p>
+            </div>
+            <div class="slider-buttons">
+                <button class="slider-button" id="reelPrev">‹</button>
+                <button class="slider-button" id="reelNext">›</button>
+            </div>
+        </div>
+
+        <div class="horizontal-slider" id="reelSlider">
+            <article class="reel" data-title="First Dance" data-type="CINEMATIC REEL" data-image="https://picsum.photos/id/1025/800/1000">
+                <img src="https://picsum.photos/id/1025/800/1000" alt="First Dance">
+                <div class="reel-info">
+                    <h3>First Dance</h3>
+                    <p>CINEMATIC REEL <span>4K · 24FPS · T1.8</span></p>
+                </div>
+            </article>
+
+            <article class="reel" data-title="Eternal Promises" data-type="WEDDING FILM" data-image="https://picsum.photos/id/65/800/1000">
+                <img src="https://picsum.photos/id/65/800/1000" alt="Eternal Promises">
+                <div class="reel-info">
+                    <h3>Eternal Promises</h3>
+                    <p>FEATURE FILM <span>4K · 24FPS · T2.0</span></p>
+                </div>
+            </article>
+
+            <article class="reel" data-title="Urban Romance" data-type="EDITORIAL REEL" data-image="https://picsum.photos/id/338/800/1000">
+                <img src="https://picsum.photos/id/338/800/1000" alt="Urban Romance">
+                <div class="reel-info">
+                    <h3>Urban Romance</h3>
+                    <p>HIGHLIGHT <span>4K · 60FPS · T1.4</span></p>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Stills Section -->
+    <section class="section stills" id="stills">
+        <div class="section-header reveal">
+            <div>
+                <div class="section-kicker"><i></i> SELECTED FRAMES</div>
+                <h2>Cinematic stills.</h2>
+                <p class="section-description">Every video frame is crafted to stand alone as a fine-art photograph.<br>Click any frame to view in high resolution.</p>
+            </div>
+            <div class="slider-buttons">
+                <button class="slider-button" id="stillPrev">‹</button>
+                <button class="slider-button" id="stillNext">›</button>
+            </div>
+        </div>
+
+        <div class="horizontal-slider" id="stillSlider">
+            <article class="still wide" data-title="Golden Hour Vows" data-type="WEDDING FRAME" data-image="https://picsum.photos/id/1062/1000/600">
+                <img src="https://picsum.photos/id/1062/1000/600" alt="Golden Hour Vows">
+                <div class="still-caption">
+                    <strong>Golden Hour Vows</strong>
+                    <span>FRAME · 01</span>
+                </div>
+            </article>
+
+            <article class="still" data-title="Portrait of Grace" data-type="EDITORIAL PORTRAIT" data-image="https://picsum.photos/id/64/600/600">
+                <img src="https://picsum.photos/id/64/600/600" alt="Portrait of Grace">
+                <div class="still-caption">
+                    <strong>Portrait of Grace</strong>
+                    <span>FRAME · 02</span>
+                </div>
+            </article>
+
+            <article class="still wide" data-title="The Reception Hall" data-type="EVENT ARCHITECTURE" data-image="https://picsum.photos/id/1043/1000/600">
+                <img src="https://picsum.photos/id/1043/1000/600" alt="The Reception Hall">
+                <div class="still-caption">
+                    <strong>The Reception Hall</strong>
+                    <span>FRAME · 03</span>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Studio Section -->
+    <section class="section studio" id="studio">
+        <div class="studio-grid reveal">
+            <div>
+                <div class="section-kicker"><i></i> ABOUT ADI PICTURES</div>
+                <h2>Crafting memories with <span>cinematic rigor.</span></h2>
+                <p class="studio-text">
+                    Based in Addis Ababa, ADI Pictures blends documentary storytelling with commercial cinema aesthetics. We utilize high-dynamic-range cinema cameras, prime lenses, and precise color grading to ensure your moments outlast time itself.
+                </p>
+                <div class="stats">
+                    <div class="stat">
+                        <strong>150+</strong>
+                        <span class="stat-label">FILMS DIRECTED</span>
+                    </div>
+                    <div class="stat">
+                        <strong>4K</strong>
+                        <span class="stat-label">PRORES ARCHIVE</span>
+                    </div>
+                    <div class="stat">
+                        <strong>100%</strong>
+                        <span class="stat-label">TAILORED COLOR</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="studio-photo">
+                <img src="https://picsum.photos/id/250/800/1000" alt="Behind the Scenes">
+                <div class="photo-label">ADDIS ABABA · ETHIOPIA</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Edit Bay Section -->
+    <section class="section">
+        <div class="section-header reveal">
+            <div>
+                <div class="section-kicker"><i></i> POST-PRODUCTION</div>
+                <h2>Inside the Edit Bay.</h2>
+                <p class="section-description">
+                    Where raw footage is carved into emotional storytelling through rhythm, sound design, and custom color grades.
+                </p>
+            </div>
+        </div>
+
+        <div class="horizontal-slider">
+            <article class="edit-card">
+                <img src="https://picsum.photos/id/0/600/400" alt="Color Grading">
+                <span class="edit-number">01</span>
+                <div class="edit-title">Color Grading</div>
+            </article>
+
+            <article class="edit-card">
+                <img src="https://picsum.photos/id/1/600/400" alt="Sound Design">
+                <span class="edit-number">02</span>
+                <div class="edit-title">Sound Design</div>
+            </article>
+
+            <article class="edit-card">
+                <img src="https://picsum.photos/id/2/600/400" alt="Mastering">
+                <span class="edit-number">03</span>
+                <div class="edit-title">4K Mastering</div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section contact" id="contact">
+        <div class="contact-box reveal">
+            <div class="section-kicker"><i></i> GET IN TOUCH</div>
+            <h2>Let's create <span>together.</span></h2>
+            <p class="contact-intro">
+                Inquire about availability for your upcoming wedding or event. We take a limited number of commissions each year to ensure single-minded quality.
+            </p>
+
+            <form id="contactForm" onsubmit="event.preventDefault(); document.getElementById('formMsg').style.display='block';">
+                <div class="form-row">
+                    <input type="text" placeholder="Your Name" required>
+                    <input type="email" placeholder="Your Email" required>
+                </div>
+                <div class="form-row">
+                    <input type="tel" placeholder="Phone Number">
+                    <select required>
+                        <option value="" disabled selected>Select Event Type</option>
+                        <option value="wedding">Wedding Film</option>
+                        <option value="event">Event Coverage</option>
+                        <option value="commercial">Commercial / Studio</option>
+                    </select>
+                </div>
+                <textarea rows="5" placeholder="Tell us about your event (Date, Location, Vision)..." required></textarea>
+                <button type="submit" class="primary-btn form-button">SEND INQUIRY</button>
+                <span class="form-message" id="formMsg" style="display:none;">
+                    ✓ Thank you! Your message has been received. We will get back to you shortly.
+                </span>
+            </form>
+        </div>
+    </section>
+</main>
+
+<!-- Footer -->
+<footer>
+    <div>
+        <div class="footer-logo">ADI <span>PICTURES</span></div>
+        <p class="footer-category">CINEMATIC WEDDING & EVENT FILMS</p>
+    </div>
+
+    <div class="footer-links">
+        <a href="#films">Films</a>
+        <a href="#stills">Stills</a>
+        <a href="#studio">Studio</a>
+        <a href="#contact">Contact</a>
+    </div>
+
+    <div>
+        <small>&copy; 2026 ADI Pictures. All rights reserved.</small>
+    </div>
+</footer>
+
+<!-- Floating Controls -->
+<a class="whatsapp" href="https://wa.me/251900000000?text=Hello%20ADI%20Pictures%2C%20I%20want%20to%20book%20a%20shoot." target="_blank" title="Chat on WhatsApp">💬</a>
+
+<button class="back-top" id="backTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">↑</button>
+
+<!-- Media Modal -->
+<div class="modal" id="mediaModal">
+    <div class="modal-background" id="modalBg"></div>
+    <div class="modal-box">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <img class="modal-image" id="modalImg" src="" alt="Preview">
+        <div class="modal-info">
+            <div class="modal-type" id="modalType">FILM</div>
+            <h3 class="modal-title" id="modalTitle">Title</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Cinematic coverage by ADI Pictures Studio.</p>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript Interactivity -->
+<script>
+    // --- Loader ---
+    window.addEventListener('load', () => {
+        const loader = document.getElementById('loader');
+        loader.classList.add('hide');
+    });
+
+    // --- Scroll Progress, Header & Back to Top ---
+    const progress = document.getElementById('progress');
+    const header = document.getElementById('header');
+    const backTop = document.getElementById('backTop');
+
+    window.addEventListener('scroll', () => {
+        const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const currentScroll = window.scrollY;
+        
+        if (totalScroll > 0) {
+            progress.style.width = (currentScroll / totalScroll * 100) + '%';
+        }
+
+        if (currentScroll > 50) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+
+        if (currentScroll > 400) {
+            backTop.classList.add('show');
+        } else {
+            backTop.classList.remove('show');
+        }
+    });
+
+    // --- Theme Toggle ---
+    const themeBtn = document.getElementById('themeBtn');
+    themeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('light');
+        themeBtn.textContent = document.body.classList.contains('light') ? '☾' : '☼';
+    });
+
+    // --- Mobile Menu ---
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('open');
+    });
+
+    mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            mobileMenu.classList.remove('open');
+        });
+    });
+
+    // --- Hero Slider ---
+    const slides = document.querySelectorAll('.hero-slide');
+    const dots = document.querySelectorAll('.hero-dot');
+    const heroTitle = document.getElementById('heroTitle');
+    const aperture = document.getElementById('aperture');
+
+    const slideData = [
+        { title: 'The Wow', aperture: 'T1.8' },
+        { title: 'The Bride', aperture: 'T2.1' },
+        { title: 'The Entrance', aperture: 'T2.4' }
+    ];
+
+    let currentSlide = 0;
+
+    function setSlide(index) {
+        slides.forEach((s, i) => s.classList.toggle('active', i === index));
+        dots.forEach((d, i) => d.classList.toggle('active', i === index));
+        heroTitle.textContent = slideData[index].title;
+        aperture.textContent = slideData[index].aperture;
+        currentSlide = index;
+    }
+
+    dots.forEach(dot => {
+        dot.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-slide'));
+            setSlide(index);
+        });
+    });
+
+    setInterval(() => {
+        let next = (currentSlide + 1) % slides.length;
+        setSlide(next);
+    }, 6000);
+
+    document.getElementById('watchFilms').addEventListener('click', () => {
+        document.getElementById('films').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // --- Slider Control Helper ---
+    function setupSliderControls(prevId, nextId, sliderId) {
+        const prevBtn = document.getElementById(prevId);
+        const nextBtn = document.getElementById(nextId);
+        const slider = document.getElementById(sliderId);
+
+        if (prevBtn && nextBtn && slider) {
+            prevBtn.addEventListener('click', () => {
+                slider.scrollBy({ left: -360, behavior: 'smooth' });
+            });
+            nextBtn.addEventListener('click', () => {
+                slider.scrollBy({ left: 360, behavior: 'smooth' });
+            });
+        }
+    }
+
+    setupSliderControls('reelPrev', 'reelNext', 'reelSlider');
+    setupSliderControls('stillPrev', 'stillNext', 'stillSlider');
+
+    // --- Modal Functionality ---
+    const modal = document.getElementById('mediaModal');
+    const modalImg = document.getElementById('modalImg');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalType = document.getElementById('modalType');
+    const modalClose = document.getElementById('modalClose');
+    const modalBg = document.getElementById('modalBg');
+
+    function openModal(image, title, type) {
+        modalImg.src = image;
+        modalTitle.textContent = title;
+        modalType.textContent = type;
+        modal.classList.add('open');
+    }
+
+    function closeModal() {
+        modal.classList.remove('open');
+    }
+
+    document.querySelectorAll('.reel, .still').forEach(card => {
+        card.addEventListener('click', () => {
+            const img = card.getAttribute('data-image');
+            const title = card.getAttribute('data-title');
+            const type = card.getAttribute('data-type');
+            if (img) openModal(img, title, type);
+        });
+    });
+
+    modalClose.addEventListener('click', closeModal);
+    modalBg.addEventListener('click', closeModal);
+
+    // --- Scroll Observer ---
+    const revealElements = document.querySelectorAll('.reveal');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.15 });
+
+    revealElements.forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
