@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-const BOT_TOKEN_FALLBACK = 'YOUR_BOT_TOKEN_HERE';
+const BOT_TOKEN_FALLBACK = '8866862480:AAF2lxXYDJ6cbKXMI-6GRseng5hZ82ojfcE';
 define('BOT_TOKEN', getenv('TELEGRAM_BOT_TOKEN') ?: BOT_TOKEN_FALLBACK);
 
 /**
