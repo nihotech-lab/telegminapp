@@ -330,7 +330,7 @@ button { border: none; background: none; cursor: pointer; }
 
   // Adsgram Integration Setup
   // 👉 <u>ADSGRAM BLOCK ID</u> ያስገቡ (ከ Adsgram Dashboard ያገኙትን ID ይተኩ)
-  const ADSGRAM_BLOCK_ID = 'YOUR_ADSGRAM_BLOCK_ID'; 
+  const ADSGRAM_BLOCK_ID = '47164'; 
 
   function showRewardAd() {
     const statusEl = document.getElementById('adStatus');
