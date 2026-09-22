@@ -2561,7 +2561,7 @@ body.light .stills{
         <div class="studio-photo reveal">
 
             <img
-                src="https://web.facebook.com/photo/?fbid=1651550696979881&set=pcb.1651551760313108"
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/774269183_1651550700313214_7569347616074828766_n.jpg?stp=dst-jpg_tt6&cstp=mx1365x2048&ctp=s1365x2048&_nc_cat=106&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeF_p7nr-PoeRH0KrxbVzA42FYlQcReAQeQViVBxF4BB5OB06a4Xp9WrI8PkED4XZbuK12j3Fhif_7C9br-8JV8p&_nc_ohc=6AzwZGur-YsQ7kNvwG0NVVY&_nc_oc=AdqBkPwz7TUJ-KojC8p2h1Ep_tAGarpAMTGX1JQ_T-JTKd4CVkqnp-DBboT5U_sa730&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=EACJTBwXwvDZMBE6IsHO9g&_nc_ss=7b2a8&oh=00_AQJqT3IjI1OYoKnowiX8q5soQgiSCFDOK-eMPnJ_BKs7eQ&oe=6AB81CD2"
                 
                 alt="ADI Pictures">
 
