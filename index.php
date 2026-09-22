@@ -1,358 +1,3736 @@
-<?php
-/**
- * Signal — Telegram Mini App (single-file PHP build) with Adsgram Monetization
- */
-
-declare(strict_types=1);
-
-const BOT_TOKEN_FALLBACK = '8866862480:AAF2lxXYDJ6cbKXMI-6GRseng5hZ82ojfcE';
-define('BOT_TOKEN', getenv('TELEGRAM_BOT_TOKEN') ?: BOT_TOKEN_FALLBACK);
-
-/**
- * Validate a Telegram WebApp initData string against the bot token.
- */
-function verify_telegram_init_data(string $initData, string $botToken): array
-{
-    parse_str($initData, $data);
-
-    if (!isset($data['hash']) || $initData === '') {
-        return ['ok' => false, 'reason' => 'missing_hash'];
-    }
-
-    $receivedHash = $data['hash'];
-    unset($data['hash']);
-    ksort($data);
-
-    $pairs = [];
-    foreach ($data as $key => $value) {
-        $pairs[] = $key . '=' . $value;
-    }
-    $dataCheckString = implode("\n", $pairs);
-
-    $secretKey = hash_hmac('sha256', $botToken, 'WebAppData', true);
-    $computedHash = hash_hmac('sha256', $dataCheckString, $secretKey);
-
-    $ok = hash_equals($computedHash, (string) $receivedHash);
-    $authDate = isset($data['auth_date']) ? (int) $data['auth_date'] : 0;
-
-    return [
-        'ok'          => $ok,
-        'auth_date'   => $authDate,
-        'age_seconds' => $authDate > 0 ? (time() - $authDate) : null,
-        'user'        => isset($data['user']) ? json_decode((string) $data['user'], true) : null,
-    ];
-}
-
-/* -------------------------------------------------------------
-   JSON API: POST /?action=verify
-   ------------------------------------------------------------- */
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_GET['action'] ?? '') === 'verify') {
-    header('Content-Type: application/json');
-
-    if (BOT_TOKEN === BOT_TOKEN_FALLBACK) {
-        echo json_encode(['ok' => false, 'reason' => 'server_not_configured']);
-        exit;
-    }
-
-    $body = json_decode((string) file_get_contents('php://input'), true) ?: [];
-    $initData = (string) ($body['initData'] ?? '');
-
-    if ($initData === '') {
-        echo json_encode(['ok' => false, 'reason' => 'empty_init_data']);
-        exit;
-    }
-
-    echo json_encode(verify_telegram_init_data($initData, BOT_TOKEN));
-    exit;
-}
-
-const PREMIUM_PRICE_STARS = 50;
-
-function create_star_invoice_link(string $botToken, string $title, string $description, string $payload, int $amountStars): array
-{
-    $url = "https://api.telegram.org/bot{$botToken}/createInvoiceLink";
-    $params = [
-        'title'          => $title,
-        'description'    => $description,
-        'payload'        => $payload,
-        'provider_token' => '',
-        'currency'       => 'XTR',
-        'prices'         => json_encode([['label' => $title, 'amount' => $amountStars]]),
-    ];
-
-    if (function_exists('curl_init')) {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => $params,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 10,
-        ]);
-        $raw = curl_exec($ch);
-        $err = curl_error($ch);
-        curl_close($ch);
-        if ($raw === false) {
-            return ['ok' => false, 'reason' => 'curl_error: ' . $err];
-        }
-    } else {
-        $context = stream_context_create([
-            'http' => [
-                'method'  => 'POST',
-                'header'  => 'Content-Type: application/x-www-form-urlencoded',
-                'content' => http_build_query($params),
-                'timeout' => 10,
-            ],
-        ]);
-        $raw = @file_get_contents($url, false, $context);
-        if ($raw === false) {
-            return ['ok' => false, 'reason' => 'request_failed'];
-        }
-    }
-
-    $decoded = json_decode($raw, true);
-    if (!is_array($decoded) || empty($decoded['ok'])) {
-        return ['ok' => false, 'reason' => $decoded['description'] ?? 'telegram_api_error'];
-    }
-
-    return ['ok' => true, 'link' => $decoded['result']];
-}
-
-/* -------------------------------------------------------------
-   JSON API: POST /?action=create_invoice
-   ------------------------------------------------------------- */
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_GET['action'] ?? '') === 'create_invoice') {
-    header('Content-Type: application/json');
-
-    if (BOT_TOKEN === BOT_TOKEN_FALLBACK) {
-        echo json_encode(['ok' => false, 'reason' => 'server_not_configured']);
-        exit;
-    }
-
-    $result = create_star_invoice_link(
-        BOT_TOKEN,
-        'Premium Arcade Pass',
-        'Unlocks Code Breaker and Word Signal permanently.',
-        'premium_pack_' . bin2hex(random_bytes(6)),
-        PREMIUM_PRICE_STARS
-    );
-
-    echo json_encode($result);
-    exit;
-}
-
-/* -------------------------------------------------------------
-   Telegram BOT WEBHOOK
-   ------------------------------------------------------------- */
-$rawBody = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' ? file_get_contents('php://input') : '';
-$update = $rawBody ? json_decode($rawBody, true) : null;
-
-if (is_array($update) && isset($update['update_id']) && !isset($_GET['action'])) {
-    header('Content-Type: application/json');
-
-    if (isset($update['pre_checkout_query'])) {
-        $queryId = $update['pre_checkout_query']['id'];
-        @file_get_contents(
-            "https://api.telegram.org/bot" . BOT_TOKEN . "/answerPreCheckoutQuery"
-            . "?pre_checkout_query_id=" . urlencode($queryId) . "&ok=true"
-        );
-        echo json_encode(['ok' => true]);
-        exit;
-    }
-
-    if (isset($update['message']['successful_payment'])) {
-        $payment = $update['message']['successful_payment'];
-        $userId  = $update['message']['from']['id'] ?? 'unknown';
-        write_payment_log($userId, $payment['telegram_payment_charge_id'] ?? '', (int) ($payment['total_amount'] ?? 0));
-        echo json_encode(['ok' => true]);
-        exit;
-    }
-
-    echo json_encode(['ok' => true]);
-    exit;
-}
-
-function write_payment_log(string $userId, string $chargeId, int $amountStars): void
-{
-    $line = sprintf("%s\tuser=%s\tcharge=%s\tstars=%d\n", date('c'), $userId, $chargeId, $amountStars);
-    @file_put_contents(__DIR__ . '/payments.log', $line, FILE_APPEND | LOCK_EX);
-}
-
-$serverTime   = date('Y-m-d H:i:s \U\T\C');
-$phpVersion   = phpversion();
-$isConfigured = BOT_TOKEN !== BOT_TOKEN_FALLBACK;
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-<title>Signal — Mini App</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080808">
 
-<!-- Telegram WebApp SDK -->
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- Adsgram SDK Integration -->
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<title>ADI Pictures | Cinematic Wedding & Event Films</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-:root {
-  --bg-deep: #05070f;
-  --bg-panel: #0d1220;
-  --bg-panel-raised: #121a2e;
-  --line: rgba(140, 160, 220, 0.12);
-  --line-strong: rgba(140, 160, 220, 0.22);
-  --blue: #3b5bfe;
-  --blue-soft: #6f86ff;
-  --blue-dim: #16204a;
-  --red: #ff3b4e;
-  --red-soft: #ff6b78;
-  --red-dim: #3a1420;
-  --green: #3ee08f;
-  --text-primary: #eef1fb;
-  --text-muted: #8790b3;
-  --text-faint: #4d5578;
-  --font-display: "Oxanium", sans-serif;
-  --font-body: "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 9px;
-  color-scheme: dark;
+
+/* https://chatgpt.com/backend-api/estuary/content?id=file_000000000e908211ad224cb7889361de&ts=496864&p=fs&cid=1&sig=2bddf40b119a08815c4c417b29faf57bcc77836a1d0eaac47c8bfcec4dab11d1&v=0 */
+
+/* =========================================================
+   RESET
+========================================================= */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-* { box-sizing: border-box; }
-html, body {
-  margin: 0; padding: 0;
-  background: var(--bg-deep); color: var(--text-primary);
-  font-family: var(--font-body);
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
-}
-button, input { font-family: inherit; color: inherit; }
-button { border: none; background: none; cursor: pointer; }
-
-#app {
-  position: relative; z-index: 1;
-  max-width: 480px; margin: 0 auto;
-  min-height: 100vh; padding-bottom: 88px;
-  display: flex; flex-direction: column;
+html{
+    scroll-behavior:smooth;
 }
 
-.app-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 18px 14px; border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(59, 91, 254, 0.08), transparent);
+body{
+    background:#080808;
+    color:#fff;
+    font-family:"DM Sans",Arial,sans-serif;
+    overflow-x:hidden;
+    background-repeat: no-repeat;
 }
-.header-left { display: flex; align-items: center; gap: 12px; }
-.avatar-ring {
-  width: 44px; height: 44px; border-radius: 50%;
-  background: linear-gradient(140deg, var(--blue), var(--red)); padding: 2px;
-}
-.avatar-fallback {
-  width: 100%; height: 100%; border-radius: 50%;
-  background: var(--bg-panel-raised); display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display); font-weight: 700; color: var(--blue-soft);
-}
-.header-name { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
 
-.view { flex: 1; padding: 18px 16px 8px; display: flex; flex-direction: column; gap: 14px; }
-.panel { background: var(--bg-panel); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; }
-.panel-eyebrow { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; color: var(--text-faint); }
-
-.btn {
-  width: 100%; padding: 13px 16px; border-radius: var(--radius-md);
-  font-family: var(--font-display); font-weight: 700; font-size: 14px;
+body.light{
+    background:#f4f4f2;
+    color:#111;
 }
-.btn-primary { background: linear-gradient(120deg, var(--blue), #5f3bfe 130%); color: #fff; }
-.btn-ad { background: linear-gradient(120deg, #3ee08f, #229954); color: #000; margin-top: 10px; }
 
-.bottom-nav {
-  position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
-  width: 100%; max-width: 480px; display: flex;
-  background: rgba(13, 18, 32, 0.9); border-top: 1px solid var(--line);
-  padding: 8px 10px; z-index: 5;
+a{
+    color:inherit;
+    text-decoration:none;
 }
-.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-faint); }
-.nav-btn.is-active { color: var(--red-soft); }
+
+button,
+input,
+textarea,
+select{
+    font:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+/* =========================================================
+   LOADER
+========================================================= */
+
+.loader{
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    background:#050505;
+    display:grid;
+    place-items:center;
+    transition:
+        opacity .8s ease,
+        visibility .8s ease;
+}
+
+.loader.hide{
+    opacity:0;
+    visibility:hidden;
+}
+
+.loader-content{
+    text-align:center;
+}
+
+.loader-logo{
+    font-family:"Space Mono";
+    font-size:38px;
+    font-weight:700;
+    letter-spacing:8px;
+}
+
+.loader-logo span{
+    display:block;
+    color:#ed1c24;
+    font-size:10px;
+    letter-spacing:5px;
+    margin-top:8px;
+}
+
+.loader-bar{
+    width:240px;
+    height:2px;
+    background:#333;
+    margin:25px auto 0;
+    overflow:hidden;
+}
+
+.loader-bar span{
+    display:block;
+    height:100%;
+    width:40%;
+    background:#ed1c24;
+    animation:loading 1.2s infinite;
+}
+
+@keyframes loading{
+    from{
+        transform:translateX(-150%);
+    }
+    to{
+        transform:translateX(350%);
+    }
+}
+
+/* =========================================================
+   PROGRESS BAR
+========================================================= */
+
+.progress{
+    position:fixed;
+    top:0;
+    left:0;
+    width:0;
+    height:3px;
+    background:#ed1c24;
+    z-index:100000;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:92px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 5%;
+
+    z-index:5000;
+
+    background:rgba(5,5,5,.70);
+    backdrop-filter:blur(18px);
+
+    border-bottom:1px solid rgba(255,255,255,.08);
+
+    transition:.3s;
+}
+
+.header.scrolled{
+    background:rgba(5,5,5,.95);
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.logo-camera{
+    font-size:36px;
+}
+
+.logo-name{
+    font-size:30px;
+    font-weight:500;
+    letter-spacing:-2px;
+}
+
+.logo-info{
+    font-family:"Space Mono";
+    font-size:12px;
+    line-height:1.1;
+}
+
+.logo-info strong{
+    color:#ed1c24;
+}
+
+.logo-info small{
+    display:block;
+    font-size:5px;
+    color:#888;
+    letter-spacing:1px;
+    margin-top:4px;
+}
+
+/* Navigation */
+
+.nav{
+    display:flex;
+    gap:35px;
+}
+
+.nav a{
+    font-family:"Space Mono";
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#aaa;
+    transition:.3s;
+}
+
+.nav a:hover{
+    color:#ed1c24;
+}
+
+/* Header actions */
+
+.header-actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.theme-btn{
+    width:55px;
+    height:50px;
+
+    color:#fff;
+    background:transparent;
+
+    border:1px solid #444;
+
+    font-size:22px;
+
+    transition:.3s;
+}
+
+.theme-btn:hover{
+    border-color:#ed1c24;
+    color:#ed1c24;
+}
+
+.book-btn{
+    background:#ed1c24;
+    color:#fff;
+
+    padding:18px 28px;
+
+    font-family:"Space Mono";
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:2px;
+
+    transition:.3s;
+}
+
+.book-btn:hover{
+    background:#ff2932;
+    transform:translateY(-3px);
+}
+
+/* Mobile button */
+
+.menu-btn{
+    display:none;
+
+    width:50px;
+    height:48px;
+
+    background:transparent;
+    border:1px solid #444;
+}
+
+.menu-btn span{
+    display:block;
+    width:20px;
+    height:1px;
+    background:#fff;
+    margin:5px auto;
+}
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+
+.mobile-menu{
+    position:fixed;
+    top:92px;
+    left:0;
+    width:100%;
+
+    z-index:4900;
+
+    background:#090909;
+
+    padding:15px 25px;
+
+    transform:translateY(-120%);
+    transition:.45s;
+
+    border-bottom:1px solid #333;
+}
+
+.mobile-menu.open{
+    transform:translateY(0);
+}
+
+.mobile-menu a{
+    display:block;
+    padding:20px 5px;
+
+    border-bottom:1px solid #222;
+
+    font-family:"Space Mono";
+    font-size:12px;
+    letter-spacing:3px;
+}
+
+.mobile-menu .mobile-book{
+    color:#ed1c24;
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero{
+    position:relative;
+
+    min-height:100vh;
+
+    display:flex;
+    align-items:flex-end;
+
+    padding:0 5% 7%;
+
+    overflow:hidden;
+}
+
+.hero-background{
+    position:absolute;
+    inset:0;
+}
+
+.hero-slide{
+    position:absolute;
+    inset:0;
+
+    background-size:cover;
+    background-position:center;
+
+    opacity:0;
+
+    transform:scale(1.06);
+
+    transition:
+        opacity 1s ease,
+        transform 7s ease;
+}
+
+.hero-slide.active{
+    opacity:1;
+    transform:scale(1);
+}
+
+.hero-overlay{
+    position:absolute;
+    inset:0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(0,0,0,.88),
+            rgba(0,0,0,.45),
+            rgba(0,0,0,.35)
+        ),
+        linear-gradient(
+            0deg,
+            rgba(0,0,0,.95),
+            transparent 65%
+        );
+}
+
+.hero-content{
+    position:relative;
+    z-index:5;
+
+    max-width:780px;
+
+    margin-top:150px;
+}
+
+.eyebrow{
+    font-family:"Space Mono";
+    font-size:12px;
+    letter-spacing:5px;
+    color:#ddd;
+}
+
+.red-dot{
+    display:inline-block;
+
+    width:13px;
+    height:13px;
+
+    background:#ed1c24;
+
+    border-radius:50%;
+
+    margin-right:13px;
+}
+
+.hero h1{
+    margin:30px 0;
+
+    font-size:
+        clamp(
+            65px,
+            9vw,
+            135px
+        );
+
+    line-height:.88;
+
+    letter-spacing:-7px;
+}
+
+.hero h1 span{
+    color:#ed1c24;
+}
+
+.hero-description{
+    max-width:700px;
+
+    color:#ddd;
+
+    font-size:18px;
+
+    line-height:1.75;
+
+    margin-bottom:35px;
+}
+
+.hero-buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+}
+
+.primary-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    background:#ed1c24;
+
+    color:#fff;
+
+    border:0;
+
+    padding:19px 30px;
+
+    font-family:"Space Mono";
+    font-size:12px;
+    font-weight:700;
+
+    letter-spacing:2px;
+
+    transition:.3s;
+}
+
+.primary-btn:hover{
+    transform:translateY(-4px);
+    background:#ff2932;
+}
+
+.secondary-btn{
+    background:rgba(0,0,0,.35);
+
+    color:#fff;
+
+    border:1px solid #666;
+
+    padding:19px 30px;
+
+    font-family:"Space Mono";
+    font-size:12px;
+    font-weight:700;
+
+    letter-spacing:2px;
+
+    transition:.3s;
+}
+
+.secondary-btn:hover{
+    border-color:#ed1c24;
+    color:#ed1c24;
+}
+
+/* =========================================================
+   HERO META
+========================================================= */
+
+.hero-meta{
+    position:absolute;
+
+    right:5%;
+    bottom:6%;
+
+    z-index:10;
+
+    display:grid;
+
+    grid-template-columns:auto auto;
+
+    gap:20px 50px;
+
+    font-family:"Space Mono";
+}
+
+.playing{
+    display:flex;
+    gap:25px;
+}
+
+.playing small{
+    color:#999;
+
+    font-size:11px;
+
+    line-height:1.8;
+}
+
+.playing strong{
+    font-size:18px;
+
+    letter-spacing:2px;
+}
+
+.camera-info{
+    color:#ed1c24;
+
+    font-size:13px;
+}
+
+.camera-info span{
+    color:#777;
+    margin:0 8px;
+}
+
+.hero-dots{
+    grid-column:1/-1;
+
+    display:flex;
+
+    gap:8px;
+}
+
+.hero-dot{
+    width:76px;
+    height:53px;
+
+    background:rgba(0,0,0,.4);
+
+    border:1px solid #444;
+
+    color:#888;
+
+    font-family:"Space Mono";
+
+    transition:.3s;
+}
+
+.hero-dot:hover,
+.hero-dot.active{
+    border-color:#ed1c24;
+    color:#fff;
+}
+
+.mute-btn{
+    width:70px;
+    height:55px;
+
+    background:rgba(0,0,0,.5);
+
+    color:#fff;
+
+    border:1px solid #555;
+}
+
+.scroll-text{
+    position:absolute;
+
+    left:5%;
+    bottom:3%;
+
+    z-index:10;
+
+    font-family:"Space Mono";
+
+    font-size:9px;
+
+    letter-spacing:3px;
+
+    color:#777;
+}
+
+.scroll-text span{
+    color:#ed1c24;
+
+    margin-left:15px;
+}
+
+/* =========================================================
+   TICKER
+========================================================= */
+
+.ticker{
+    height:100px;
+
+    display:flex;
+    align-items:center;
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+    border-top:1px solid #222;
+    border-bottom:1px solid #222;
+
+    font-family:"Space Mono";
+
+    font-size:22px;
+
+    letter-spacing:7px;
+
+    color:#666;
+}
+
+.ticker-content{
+    animation:marquee 28s linear infinite;
+}
+
+.ticker strong{
+    color:#ed1c24;
+}
+
+@keyframes marquee{
+    from{
+        transform:translateX(0);
+    }
+
+    to{
+        transform:translateX(-50%);
+    }
+}
+
+/* =========================================================
+   GENERAL SECTION
+========================================================= */
+
+.section{
+    padding:125px 5%;
+
+    border-bottom:1px solid #222;
+}
+
+.section-header{
+    display:flex;
+
+    justify-content:space-between;
+    align-items:flex-end;
+
+    gap:40px;
+
+    margin-bottom:55px;
+}
+
+.section-kicker{
+    color:#ed1c24;
+
+    font-family:"Space Mono";
+
+    font-size:12px;
+
+    font-weight:700;
+
+    letter-spacing:5px;
+
+    margin-bottom:25px;
+}
+
+.section-kicker i{
+    display:inline-block;
+
+    width:65px;
+    height:3px;
+
+    background:#ed1c24;
+
+    margin-right:20px;
+
+    vertical-align:middle;
+}
+
+.section h2{
+    font-size:
+        clamp(
+            45px,
+            5vw,
+            78px
+        );
+
+    line-height:1;
+
+    letter-spacing:-4px;
+
+    margin-bottom:20px;
+}
+
+.section-description{
+    color:#999;
+
+    font-size:18px;
+
+    line-height:1.7;
+}
+
+/* =========================================================
+   SLIDER BUTTONS
+========================================================= */
+
+.slider-buttons{
+    display:flex;
+
+    gap:18px;
+}
+
+.slider-button{
+    width:88px;
+    height:88px;
+
+    background:#090909;
+
+    border:1px solid #333;
+
+    color:#fff;
+
+    font-size:40px;
+
+    transition:.3s;
+}
+
+.slider-button:hover{
+    border-color:#ed1c24;
+    color:#ed1c24;
+}
+
+/* =========================================================
+   REELS
+========================================================= */
+
+.horizontal-slider{
+    display:flex;
+
+    gap:30px;
+
+    overflow-x:auto;
+
+    scrollbar-width:none;
+
+    scroll-snap-type:x mandatory;
+}
+
+.horizontal-slider::-webkit-scrollbar{
+    display:none;
+}
+
+.reel{
+    position:relative;
+
+    flex:0 0 410px;
+
+    height:610px;
+
+    overflow:hidden;
+
+    border:1px solid #333;
+
+    scroll-snap-align:start;
+
+    cursor:pointer;
+}
+
+.reel img{
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    transition:.8s;
+}
+
+.reel:hover img{
+    transform:scale(1.06);
+}
+
+.reel-gradient{
+    position:absolute;
+    inset:0;
+
+    background:
+        linear-gradient(
+            0deg,
+            rgba(0,0,0,.95),
+            transparent 55%
+        );
+}
+
+.reel-number{
+    position:absolute;
+
+    top:30px;
+    left:28px;
+
+    font-family:"Space Mono";
+
+    font-size:11px;
+
+    letter-spacing:3px;
+}
+
+.play-circle{
+    position:absolute;
+
+    top:25px;
+    right:25px;
+
+    width:60px;
+    height:60px;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:50%;
+
+    background:rgba(0,0,0,.2);
+
+    border:1px solid #aaa;
+
+    color:#fff;
+
+    transition:.3s;
+}
+
+.reel:hover .play-circle{
+    background:#ed1c24;
+    border-color:#ed1c24;
+}
+
+.reel-info{
+    position:absolute;
+
+    left:28px;
+    right:20px;
+    bottom:28px;
+}
+
+.reel-info h3{
+    font-size:32px;
+
+    margin-bottom:10px;
+}
+
+.reel-info p{
+    font-family:"Space Mono";
+
+    color:#ed1c24;
+
+    font-size:11px;
+
+    letter-spacing:2px;
+}
+
+.reel-info p span{
+    color:#999;
+    margin-left:10px;
+}
+
+/* =========================================================
+   STILLS
+========================================================= */
+
+.stills{
+    background:#090909;
+}
+
+.still{
+    position:relative;
+
+    flex:0 0 560px;
+
+    height:430px;
+
+    overflow:hidden;
+
+    scroll-snap-align:start;
+}
+
+.still.wide{
+    flex-basis:760px;
+}
+
+.still img{
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    transition:.8s;
+}
+
+.still:hover img{
+    transform:scale(1.05);
+}
+
+.still-caption{
+    position:absolute;
+
+    left:0;
+    right:0;
+    bottom:0;
+
+    padding:35px 30px;
+
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+
+    background:
+        linear-gradient(
+            transparent,
+            rgba(0,0,0,.95)
+        );
+}
+
+.still-caption strong{
+    font-size:30px;
+}
+
+.still-caption span{
+    color:#aaa;
+
+    font-family:"Space Mono";
+
+    font-size:10px;
+}
+
+/* =========================================================
+   STUDIO
+========================================================= */
+
+.studio{
+    background:#0a0a0a;
+}
+
+.studio-grid{
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:8%;
+
+    align-items:center;
+}
+
+.studio h2{
+    font-size:
+        clamp(
+            45px,
+            5.5vw,
+            82px
+        );
+
+    line-height:1;
+
+    letter-spacing:-5px;
+}
+
+.studio h2 span{
+    color:#ed1c24;
+}
+
+.studio-text{
+    color:#aaa;
+
+    font-size:18px;
+
+    line-height:1.8;
+
+    margin-top:30px;
+}
+
+.stats{
+    display:flex;
+
+    gap:55px;
+
+    flex-wrap:wrap;
+
+    margin-top:60px;
+}
+
+.stat strong{
+    font-size:55px;
+
+    letter-spacing:-3px;
+}
+
+.stat-label{
+    display:block;
+
+    font-family:"Space Mono";
+
+    color:#666;
+
+    font-size:9px;
+
+    letter-spacing:3px;
+
+    margin-top:10px;
+}
+
+.studio-photo{
+    position:relative;
+
+    overflow:hidden;
+}
+
+.studio-photo img{
+    width:100%;
+    height:650px;
+
+    object-fit:cover;
+
+    transition:.8s;
+}
+
+.studio-photo:hover img{
+    transform:scale(1.04);
+}
+
+.photo-label{
+    position:absolute;
+
+    right:20px;
+    bottom:20px;
+
+    border:1px solid #aaa;
+
+    padding:10px;
+
+    font-family:"Space Mono";
+
+    font-size:10px;
+
+    letter-spacing:3px;
+}
+
+/* =========================================================
+   EDIT BAY
+========================================================= */
+
+.edit-card{
+    position:relative;
+
+    flex:0 0 330px;
+
+    height:470px;
+
+    overflow:hidden;
+
+    scroll-snap-align:start;
+}
+
+.edit-card img{
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    transition:.7s;
+}
+
+.edit-card:hover img{
+    transform:scale(1.05);
+}
+
+.edit-card::after{
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    background:
+        linear-gradient(
+            transparent 40%,
+            rgba(0,0,0,.95)
+        );
+}
+
+.edit-number{
+    position:absolute;
+
+    top:25px;
+    left:25px;
+
+    z-index:2;
+
+    font-family:"Space Mono";
+
+    font-size:11px;
+
+    letter-spacing:3px;
+}
+
+.edit-title{
+    position:absolute;
+
+    z-index:2;
+
+    left:25px;
+    bottom:25px;
+
+    font-size:28px;
+}
+
+/* =========================================================
+   CONTACT
+========================================================= */
+
+.contact{
+    padding-top:150px;
+    padding-bottom:150px;
+}
+
+.contact-box{
+    max-width:1050px;
+
+    margin:auto;
+
+    padding:70px;
+
+    border:1px solid #333;
+
+    background:
+        linear-gradient(
+            135deg,
+            #111,
+            #080808
+        );
+}
+
+.contact h2{
+    font-size:
+        clamp(
+            45px,
+            6vw,
+            85px
+        );
+
+    line-height:.95;
+
+    letter-spacing:-5px;
+
+    margin-bottom:30px;
+}
+
+.contact h2 span{
+    color:#ed1c24;
+}
+
+.contact-intro{
+    max-width:700px;
+
+    color:#999;
+
+    font-size:18px;
+
+    line-height:1.7;
+
+    margin-bottom:35px;
+}
+
+.form-row{
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:15px;
+
+    margin-top:15px;
+}
+
+input,
+textarea,
+select{
+    width:100%;
+
+    padding:18px;
+
+    background:#111;
+
+    color:#fff;
+
+    border:1px solid #333;
+
+    outline:none;
+}
+
+input:focus,
+textarea:focus,
+select:focus{
+    border-color:#ed1c24;
+}
+
+textarea{
+    margin-top:15px;
+
+    resize:vertical;
+}
+
+.form-button{
+    margin-top:18px;
+}
+
+.form-message{
+    color:#4de28b;
+
+    margin-top:15px;
+
+    display:block;
+
+    font-family:"Space Mono";
+
+    font-size:11px;
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+footer{
+    padding:70px 5%;
+
+    border-top:1px solid #222;
+
+    display:grid;
+
+    grid-template-columns:1fr auto auto;
+
+    align-items:center;
+
+    gap:30px;
+
+    color:#777;
+}
+
+.footer-logo{
+    font-family:"Space Mono";
+
+    font-weight:700;
+
+    font-size:25px;
+
+    color:#fff;
+}
+
+.footer-logo span{
+    color:#ed1c24;
+}
+
+.footer-category{
+    font-family:"Space Mono";
+
+    font-size:10px;
+
+    letter-spacing:2px;
+}
+
+.footer-links{
+    display:flex;
+
+    gap:25px;
+
+    font-family:"Space Mono";
+
+    font-size:10px;
+}
+
+.footer-links a:hover{
+    color:#ed1c24;
+}
+
+/* =========================================================
+   WHATSAPP
+========================================================= */
+
+.whatsapp{
+    position:fixed;
+
+    right:30px;
+    bottom:30px;
+
+    z-index:3000;
+
+    width:78px;
+    height:78px;
+
+    border-radius:50%;
+
+    display:grid;
+    place-items:center;
+
+    background:#20d66b;
+
+    color:#fff;
+
+    font-size:27px;
+
+    border:7px solid #061a0e;
+
+    box-shadow:
+        0 0 0 2px #0c6335,
+        0 0 30px rgba(32,214,107,.35);
+
+    animation:whatsappPulse 2s infinite;
+}
+
+@keyframes whatsappPulse{
+
+    0%,100%{
+        transform:scale(1);
+    }
+
+    50%{
+        transform:scale(1.07);
+    }
+
+}
+
+/* =========================================================
+   BACK TO TOP
+========================================================= */
+
+.back-top{
+    position:fixed;
+
+    right:30px;
+    bottom:125px;
+
+    z-index:2000;
+
+    width:45px;
+    height:45px;
+
+    background:#111;
+
+    color:#fff;
+
+    border:1px solid #555;
+
+    opacity:0;
+
+    pointer-events:none;
+
+    transition:.3s;
+}
+
+.back-top.show{
+    opacity:1;
+    pointer-events:auto;
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal{
+    position:fixed;
+
+    inset:0;
+
+    z-index:9998;
+
+    display:none;
+
+    place-items:center;
+
+    padding:25px;
+}
+
+.modal.open{
+    display:grid;
+}
+
+.modal-background{
+    position:absolute;
+
+    inset:0;
+
+    background:rgba(0,0,0,.88);
+
+    backdrop-filter:blur(10px);
+}
+
+.modal-box{
+    position:relative;
+
+    z-index:2;
+
+    width:min(850px,95vw);
+
+    background:#101010;
+
+    border:1px solid #444;
+
+    overflow:hidden;
+}
+
+.modal-close{
+    position:absolute;
+
+    right:15px;
+    top:15px;
+
+    z-index:5;
+
+    width:45px;
+    height:45px;
+
+    background:rgba(0,0,0,.8);
+
+    border:1px solid #aaa;
+
+    color:#fff;
+
+    font-size:30px;
+}
+
+.modal-image{
+    width:100%;
+
+    max-height:70vh;
+
+    object-fit:cover;
+}
+
+.modal-info{
+    padding:25px;
+}
+
+.modal-type{
+    color:#ed1c24;
+
+    font-family:"Space Mono";
+
+    font-size:10px;
+
+    letter-spacing:3px;
+}
+
+.modal-title{
+    font-size:36px;
+
+    margin-top:8px;
+}
+
+.modal-description{
+    color:#888;
+
+    margin-top:10px;
+}
+
+/* =========================================================
+   REVEAL ANIMATION
+========================================================= */
+
+.reveal{
+    opacity:0;
+
+    transform:translateY(45px);
+
+    transition:
+        opacity .9s ease,
+        transform .9s ease;
+}
+
+.reveal.visible{
+    opacity:1;
+
+    transform:translateY(0);
+}
+
+/* =========================================================
+   LIGHT MODE
+========================================================= */
+
+body.light .header{
+    background:rgba(245,245,243,.9);
+
+    border-color:#ddd;
+}
+
+body.light .nav a{
+    color:#555;
+}
+
+body.light .theme-btn{
+    color:#111;
+}
+
+body.light .section{
+    border-color:#ddd;
+}
+
+body.light .ticker{
+    border-color:#ddd;
+}
+
+body.light .still{
+    border-color:#ccc;
+}
+
+body.light .studio,
+body.light .stills{
+    background:#eee;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:900px){
+
+    .header{
+        height:76px;
+
+        padding:0 18px;
+    }
+
+    .logo-camera{
+        font-size:25px;
+    }
+
+    .logo-name{
+        font-size:22px;
+    }
+
+    .logo-info{
+        font-size:9px;
+    }
+
+    .nav{
+        display:none;
+    }
+
+    .theme-btn{
+        width:45px;
+        height:43px;
+    }
+
+    .book-btn{
+        padding:14px 16px;
+
+        font-size:9px;
+    }
+
+    .menu-btn{
+        display:block;
+    }
+
+    .mobile-menu{
+        top:76px;
+    }
+
+    .hero{
+        min-height:900px;
+
+        padding:
+            0
+            20px
+            145px;
+    }
+
+    .hero-content{
+        margin-top:100px;
+    }
+
+    .hero h1{
+        font-size:70px;
+
+        letter-spacing:-4px;
+    }
+
+    .hero-description{
+        font-size:16px;
+    }
+
+    .hero-buttons{
+        flex-direction:column;
+    }
+
+    .primary-btn,
+    .secondary-btn{
+        width:100%;
+    }
+
+    .hero-meta{
+        left:20px;
+        right:20px;
+
+        bottom:25px;
+
+        grid-template-columns:1fr auto;
+
+        gap:15px;
+    }
+
+    .hero-dots{
+        grid-column:1/-1;
+    }
+
+    .scroll-text{
+        display:none;
+    }
+
+    .section{
+        padding:
+            85px
+            20px;
+    }
+
+    .section-header{
+        flex-direction:column;
+
+        align-items:flex-start;
+    }
+
+    .slider-buttons{
+        align-self:flex-end;
+    }
+
+    .slider-button{
+        width:58px;
+        height:58px;
+    }
+
+    .reel{
+        flex-basis:78vw;
+
+        height:550px;
+    }
+
+    .still,
+    .still.wide{
+        flex-basis:88vw;
+
+        height:370px;
+    }
+
+    .studio-grid{
+        grid-template-columns:1fr;
+    }
+
+    .studio-photo{
+        margin-top:40px;
+    }
+
+    .studio-photo img{
+        height:500px;
+    }
+
+    .stats{
+        gap:25px;
+    }
+
+    .stat strong{
+        font-size:42px;
+    }
+
+    .contact{
+        padding:
+            90px
+            20px;
+    }
+
+    .contact-box{
+        padding:35px 22px;
+    }
+
+    .form-row{
+        grid-template-columns:1fr;
+    }
+
+    footer{
+        grid-template-columns:1fr;
+
+        gap:20px;
+    }
+
+    .whatsapp{
+        width:70px;
+        height:70px;
+
+        right:20px;
+        bottom:20px;
+    }
+
+    .back-top{
+        right:20px;
+        bottom:105px;
+    }
+
+}
+
+@media(max-width:500px){
+
+    .book-btn{
+        display:none;
+    }
+
+    .hero h1{
+        font-size:58px;
+    }
+
+    .eyebrow{
+        font-size:9px;
+
+        letter-spacing:3px;
+    }
+
+    .ticker{
+        height:70px;
+
+        font-size:14px;
+    }
+
+    .reel{
+        height:520px;
+    }
+
+    .contact h2{
+        font-size:48px;
+    }
+
+}
+
 </style>
 </head>
+
 <body>
 
-<div id="app">
-  <header class="app-header">
-    <div class="header-left">
-      <div class="avatar-ring"><span id="userInitial" class="avatar-fallback">U</span></div>
-      <div>
-        <h1 id="userName" class="header-name">Operator</h1>
-      </div>
+<!-- =====================================================
+     LOADER
+===================================================== -->
+
+<div class="loader" id="loader">
+
+    <div class="loader-content">
+
+        <div class="loader-logo">
+            ADI
+            <span>PICTURES</span>
+        </div>
+
+        <div class="loader-bar">
+            <span></span>
+        </div>
+
     </div>
-    <div>
-      <span style="font-family: var(--font-mono); font-size: 12px; color: var(--green);">Points: <span id="userPoints">0</span></span>
-    </div>
-  </header>
 
-  <main class="view" id="view-home">
-    <section class="panel">
-      <span class="panel-eyebrow">01 — Adsgram Monetization</span>
-      <p style="font-size: 13px; color: var(--text-muted); margin: 8px 0;">Watch a video ad to earn reward points for your account.</p>
-      <button class="btn btn-ad" onclick="showRewardAd()">📺 Watch Ad (+50 Points)</button>
-      <p id="adStatus" style="font-size: 11px; color: var(--text-faint); margin-top: 6px;"></p>
-    </section>
-
-    <section class="panel">
-      <span class="panel-eyebrow">02 — Identity</span>
-      <p style="font-size: 13px;">User ID: <span id="stat-userid" style="font-family: var(--font-mono);">—</span></p>
-    </section>
-  </main>
-
-  <nav class="bottom-nav">
-    <button class="nav-btn is-active"><span>HOME</span></button>
-  </nav>
 </div>
 
+<!-- =====================================================
+     PROGRESS
+===================================================== -->
+
+<div class="progress" id="progress"></div>
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header class="header" id="header">
+
+    <a href="#home" class="logo">
+
+        <div class="logo-camera">
+            ◉
+        </div>
+
+        <div class="logo-name">
+            ADI
+        </div>
+
+        <div class="logo-info">
+            <strong>PICTURES</strong>
+            <small>THINK · IMAGINE · CREATE</small>
+        </div>
+
+    </a>
+
+    <nav class="nav">
+
+        <a href="#films">Films</a>
+
+        <a href="#stills">events</a>
+
+        <a href="#studio">Studio</a>
+
+        <a href="#contact">Contact</a>
+
+    </nav>
+
+    <div class="header-actions">
+
+        <button
+            class="theme-btn"
+            id="themeBtn">
+            ☼
+        </button>
+
+        <a
+            class="book-btn"
+            href="https://web.facebook.com/people/Adi-pictures/100063748989002/"
+            target="_blank">
+
+            ◉ &nbsp; BOOK A SHOOT
+
+        </a>
+
+        <button
+            class="menu-btn"
+            id="menuBtn">
+
+            <span></span>
+            <span></span>
+
+        </button>
+
+    </div>
+
+</header>
+
+<!-- =====================================================
+     MOBILE MENU
+===================================================== -->
+
+<div class="mobile-menu" id="mobileMenu">
+
+    <a href="#films">Films</a>
+
+    <a href="#stills">Stills</a>
+
+    <a href="#studio">Studio</a>
+
+    <a href="#contact">Contact</a>
+
+    <a
+        class="mobile-book"
+        href="++
+        https:https://web.facebook.com/people/Adi-pictures/100063748989002/"
+        target="_blank">
+
+        BOOK ON WHATSAPP ↗
+
+    </a>
+
+</div>
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
+
+<main id="home">
+
+<!-- =====================================================
+     HERO
+===================================================== -->
+
+<section class="hero">
+
+    <div class="hero-background">
+
+        <div
+            class="hero-slide active"
+            
+            style="background-image:url('https://img.freepik.com/premium-photo/photographer-wild_1275912-30717.jpg')"></div>
+            <!-- style="background-image:url('https://tse4.mm.bing.net/th/id/OIP._cdxLDzvmQpPKAOfAwqO-AHaHa?r=0&pid=ImgDet&w=179&h=179&c=7&dpr=1.3&o=7&rm=3')"> -->
+        </div>
+
+        <div
+            class="hero-slide"
+            style="background-image:url('https://th.bing.com/th/id/R.cd18ac95c192e1fc115f4c52a4bfb26e?rik=FTWROpqMNumoiQ&riu=http%3a%2f%2fmeghnarathorephotography.com%2fwp-content%2fuploads%2f2023%2f03%2fmeghna-rathore-photography-gurgaon-best-newborn-photographer-for-theme-photoshoot.jpg&ehk=wLkRdzlA3K82YhceC%2bZ4npVfYXCPN8roHQHOrP38OYI%3d&risl=&pid=ImgRaw&r=0')">
+        </div>
+
+        <div
+            class="hero-slide"
+            style="background-image:url('https://media.istockphoto.com/id/1598347273/photo/asian-graduates-celebrate-together.jpg?s=612x612&w=0&k=20&c=vQ1Qu8AsUnxYpx6IRY4fWizPNINwsvkpXzdASmJyPsM=')">
+        </div>
+
+    </div>
+
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+
+        <div class="eyebrow">
+        
+            <span class="red-dot"></span>
+
+            NOW SHOWING
+
+            <span>•</span>
+
+            FEATURED FILM
+
+        </div>
+
+        <h1>
+
+            Your day.<br>
+
+            In <span>motion.</span>
+
+        </h1>
+
+        <p class="hero-description">
+
+            ADI Pictures is a wedding & event film studio
+            in Adama,Ethiopia. We don't just record the day —
+            we direct it, light it, and cut it like photo.
+
+        </p>
+
+        <div class="hero-buttons">
+
+            <a
+                class="primary-btn"
+                href="https://web.facebook.com/people/Adi-pictures/100063748989002/"
+                target="_blank">
+
+                ◉ &nbsp; BOOK ON Facebook
+
+            </a>
+
+            <button
+                class="secondary-btn"
+                id="watchFilms">
+
+                ▶ &nbsp; WATCH THE FILMS
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- HERO META -->
+
+    <div class="hero-meta">
+
+        <div class="playing">
+
+            <small>
+                NOW<br>
+                PLAYING
+            </small>
+
+            <strong id="heroTitle">
+                The Wow
+            </strong>
+
+        </div>
+
+        <div class="camera-info">
+
+            4K
+
+            <span>·</span>
+
+            24FPS
+
+            <span>·</span>
+
+            <b id="aperture">
+                T1.8
+            </b>
+
+        </div>
+
+        <div class="hero-dots">
+
+            <button
+                class="hero-dot active"
+                data-slide="0">
+                01
+            </button>
+
+            <button
+                class="hero-dot"
+                data-slide="1">
+                02
+            </button>
+
+            <button
+                class="hero-dot"
+                data-slide="2">
+                03
+            </button>
+
+        </div>
+
+        <button
+            class="mute-btn"
+            id="muteBtn">
+
+            🔇
+
+        </button>
+
+    </div>
+
+    <div class="scroll-text">
+
+        SCROLL TO EXPLORE
+
+        <span>↓</span>
+
+    </div>
+
+</section>
+
+<!-- =====================================================
+     TICKER
+===================================================== -->
+
+<div class="ticker">
+
+    <div class="ticker-content">
+
+        FRAME ·
+
+        <strong>THINK</strong>
+
+        · IMAGINE ·
+
+        <strong>CREATE</strong>
+
+        · STORY ·
+
+        <strong>MOTION</strong>
+
+        · FRAME ·
+
+        <strong>THINK</strong>
+
+        · IMAGINE ·
+
+        <strong>CREATE</strong>
+
+        · STORY ·
+
+        <strong>MOTION</strong>
+
+        · FRAME ·
+
+        <strong>THINK</strong>
+
+        · IMAGINE ·
+
+        <strong>CREATE</strong>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     FEATURED FILMS
+===================================================== -->
+
+<section
+    class="section"
+    id="films">
+
+    <div class="section-header reveal">
+
+        <div>
+            <div class="section-kicker">
+
+                <i></i>
+
+                FEATURED FILMS
+
+            </div>
+
+            <h2>
+                Precious Moments.
+            </h2>
+
+            <p class="section-description">
+                Beautiful memories of special celebrations, filmed with love.
+                <br>
+
+                Hover or tap a reel to play.
+
+            </p>
+
+        </div>
+
+        <div class="slider-buttons">
+
+            <button
+                class="slider-button"
+                id="reelPrev">
+                ‹
+            </button>
+
+            <button
+                class="slider-button"
+                id="reelNext">
+                ›
+            </button>
+
+        </div>
+
+    </div>
+
+    <div
+        class="horizontal-slider"
+        id="reelSlider">
+
+        <!-- REEL 01 -->
+
+        <article
+            class="reel"
+            data-title="Futtur Star"
+            data-type="WEDDING FILM"
+            data-image="https://i.pinimg.com/736x/94/b4/e5/94b4e58e89f08abc19cb34c90c11e86f.jpg">
+
+            <img
+                src="https://i.pinimg.com/736x/94/b4/e5/94b4e58e89f08abc19cb34c90c11e86f.jpg"
+                alt="The Bride">
+
+            <div class="reel-gradient"></div>
+
+            <span class="reel-number">
+                REEL · 01
+            </span>
+
+            <button class="play-circle">
+                ▶
+            </button>
+
+            <div class="reel-info">
+
+                <h3>
+                    Futtur Star
+                </h3>
+
+                <p>
+                    WEDDING FILM
+
+                    <span>
+                        4K · 24FPS · T2.1
+                    </span>
+                </p>
+
+            </div>
+
+        </article>
+
+        <!-- REEL 02 -->
+
+        <article
+            class="reel"
+            data-title=" Little Princess"
+            data-type="EVENT FILM"
+            data-image="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/593539861_1420328810102072_388455529335321203_n.jpg?stp=dst-jpg_tt6&cstp=mx1365x2048&ctp=s1365x2048&_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFkunBAIlWdbPf2Hl0YT4wjKCzU4w6qeF8oLNTjDqp4X4r56_3PA1I67H61ZMNmulpP4_ed29KldM8dJfIKNjzR&_nc_ohc=SjcS00iLxyIQ7kNvwHWzMKA&_nc_oc=Adofy8ICxV-78Jj_fJupQ5hxlc9mzuPCmgWfVRxb8ScyuEP9UFS-BS4up9o7UFx9vZ8&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=rIZFKJ9ZrMLcXyIt5VPVFA&_nc_ss=7b2a8&oh=00_AQJaMrl7h-8byNiZun1K4V8hBkQzjua4E4fysMF_yc07Fg&oe=6AA6CBAE">
+
+            <img
+                src="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/593539861_1420328810102072_388455529335321203_n.jpg?stp=dst-jpg_tt6&cstp=mx1365x2048&ctp=s1365x2048&_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFkunBAIlWdbPf2Hl0YT4wjKCzU4w6qeF8oLNTjDqp4X4r56_3PA1I67H61ZMNmulpP4_ed29KldM8dJfIKNjzR&_nc_ohc=SjcS00iLxyIQ7kNvwHWzMKA&_nc_oc=Adofy8ICxV-78Jj_fJupQ5hxlc9mzuPCmgWfVRxb8ScyuEP9UFS-BS4up9o7UFx9vZ8&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=rIZFKJ9ZrMLcXyIt5VPVFA&_nc_ss=7b2a8&oh=00_AQJaMrl7h-8byNiZun1K4V8hBkQzjua4E4fysMF_yc07Fg&oe=6AA6CBAE" 
+                alt="Grand Entrance">
+
+            <div class="reel-gradient"></div>
+
+            <span class="reel-number">
+                REEL · 02
+            </span>
+
+            <button class="play-circle">
+                ▶
+            </button>
+
+            <div class="reel-info">
+
+                <h3>
+                    Little Princess
+                </h3>
+
+                <p>
+                    EVENT FILM
+
+                    <span>
+                        4K · 24FPS · T2.4
+                    </span>
+                </p>
+
+            </div>
+
+        </article>
+
+        <!-- REEL 03 -->
+
+        <article
+            class="reel"
+            data-title="First Steps"
+            data-type="WEDDING FILM"
+            data-image="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/492002195_1234190515382570_839291287140931163_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGr2HE02NgBH3kn6j1MuAQ5Ew0mgQCqC9UTDSaBAKoL1bp_7Joqw_pmsfggvT0IE92BzdowCxvlqUBsdM80J2RP&_nc_ohc=WRRiRdmryfQQ7kNvwEmls0G&_nc_oc=AdooGyQajI8Zu76NykcJS8UWSaRntN24bI66ZHWNj_KzSHoDK5s4ZOpsqM0lrEJ0R-8&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=Yh3GppBA1SWGXuUCEFNBXA&_nc_ss=7b2a8&oh=00_AQIOEEtgDdyR1GT9tkOV5U4bEF3RD1nFqfotuidI1z_wkg&oe=6AA6E7B0">
+
+            <img src="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/492002195_1234190515382570_839291287140931163_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGr2HE02NgBH3kn6j1MuAQ5Ew0mgQCqC9UTDSaBAKoL1bp_7Joqw_pmsfggvT0IE92BzdowCxvlqUBsdM80J2RP&_nc_ohc=WRRiRdmryfQQ7kNvwEmls0G&_nc_oc=AdooGyQajI8Zu76NykcJS8UWSaRntN24bI66ZHWNj_KzSHoDK5s4ZOpsqM0lrEJ0R-8&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=Yh3GppBA1SWGXuUCEFNBXA&_nc_ss=7b2a8&oh=00_AQIOEEtgDdyR1GT9tkOV5U4bEF3RD1nFqfotuidI1z_wkg&oe=6AA6E7B0"
+                alt="The Veil">
+
+            <div class="reel-gradient"></div>
+
+            <span class="reel-number">
+                REEL · 03
+            </span>
+
+            <button class="play-circle">
+                ▶
+            </button>
+
+            <div class="reel-info">
+
+                <h3>
+                    First Steps
+                </h3>
+
+                <p>
+                    WEDDING FILM
+
+                    <span>
+                        4K · 24FPS · T2.0
+                    </span>
+                </p>
+
+            </div>
+
+        </article>
+
+        <!-- REEL 04 -->
+
+        <article
+            class="reel"
+            data-title="Celebratino Cutie"
+            data-type="EVENT FILM"
+            data-image="https://img.freepik.com/premium-photo/photography-black-american-kids-girl-happy-lifestyle_1288657-161880.jpg">
+
+            <img
+                src="https://img.freepik.com/premium-photo/photography-black-american-kids-girl-happy-lifestyle_1288657-161880.jpg"
+                alt="Habesha">
+
+            <div class="reel-gradient"></div>
+
+            <span class="reel-number">
+                REEL · 04
+            </span>
+
+            <button class="play-circle">
+                ▶
+            </button>
+
+            <div class="reel-info">
+
+                <h3>
+                    Celebratino Cutie
+                </h3>
+
+                <p>
+                    EVENT FILM
+
+                    <span>
+                        4K · 24FPS · T1.8
+                    </span>
+                </p>
+
+            </div>
+
+        </article>
+
+    </div>
+
+</section>
+
+<!-- =====================================================
+     STILLS
+===================================================== -->
+
+<section
+    class="section stills"
+    id="stills">
+
+    <div class="section-header reveal">
+
+        <div>
+
+            <div class="section-kicker">
+
+                <i></i>
+
+                THE CONTACT SHEET
+
+            </div>
+
+            <h2>
+                Events.
+            </h2>
+
+            <p class="section-description">
+
+                A selection of frames from recent weddings,
+                events and portrait sessions.
+
+            </p>
+            <p>
+                <!-- ከቅርብ ጊዜ የሰርግ የክስተቶች እና የቁም ክፍለ ጊዜ ምርጫ  -->
+                 ከቅርብ ጊዜ ሠርግ፣ ክስተቶች እና የቁም ሥዕሎች የተወሰዱ ጥይቶች ምርጫ።
+            </p>
+
+        </div>
+
+        <div class="slider-buttons">
+
+            <button
+                class="slider-button"
+                id="stillPrev">
+                ‹
+            </button>
+
+            <button
+                class="slider-button"
+                id="stillNext">
+                ›
+            </button>
+
+        </div>
+
+    </div>
+
+    <div
+        class="horizontal-slider"
+        id="stillSlider">
+
+        <figure class="still wide">
+            <img
+                src="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/552170159_1351274170340870_4592488797735015639_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s590x590&_nc_cat=109&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEl5vtEeTnO04y3QpuyqB8kG0cCF25ge9kbRwIXbmB72QNsIEsMsMXkrmJw0gN4aNyErY98QoinyZbehDWWIsBW&_nc_ohc=-FCiBpQlzvkQ7kNvwE8ckNq&_nc_oc=AdoAt2C_JQmOLdfp9moFMeo6KQApspfvZ3aaDW0GBFUE5Uk7NwG7VRNjrXDZa_aPHmo&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=pvx0UjzPOcyJUA-DRLW9zA&_nc_ss=7b2a8&oh=00_AQIXWZE6BIEu2YdkmcMn9MPOgPtkG5IOgQuCgiPNUmxn6w&oe=6AA6E952"
+                alt="Golden Hour">
+            <figcaption class="still-caption">
+
+                <strong>
+                    Golden Hour
+                </strong>
+
+                <span>
+                    WEDDING · PORTRAIT
+                </span>
+
+            </figcaption>
+
+        </figure>
+
+        <figure class="still">
+
+            <img
+                src="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/659037910_1525866256214993_5696717505039017386_n.jpg?stp=dst-jpg_tt6&cstp=mx1365x2048&ctp=s1365x2048&_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEDsQEN-UljKumr0z3DR-pfrY53wTmr8QqtjnfBOavxCgzubstDLYn0k-wWjVr4_R0YhL4Z8S1oygpoFmFVEXbm&_nc_ohc=SdM59-NnlFQQ7kNvwGTTheX&_nc_oc=AdqucfpwEvoJyfT5V-uP2Qwn8w_VOE0AmUH3Xv5oH-IbLZuakQNNWQdDhTpVumu93LI&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=dwZY2RIUoN6rQBkulfdldg&_nc_ss=7b2a8&oh=00_AQJ9TFBXLC6dFHnyWDPM5XlRR7M07sekoM_A1uw9Br1-mA&oe=6AA6F067"
+                alt="The Bride">
+
+            <figcaption class="still-caption">
+
+                <strong>
+                    The Bride
+                </strong>
+
+                <span>
+                    WEDDING
+                </span>
+
+            </figcaption>
+
+        </figure>
+
+        <figure class="still">
+
+            <img
+            
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/494285647_1225309706270651_5049265173277190970_n.jpg?stp=dst-jpg_tt6&cstp=mx960x640&ctp=s960x640&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHmDDG7ISytfXg3tBLDtU3E89kGwB_tJHDz2QbAH-0kcB2Vcy0I8ftbop_cihp7z6LrffA8BeRI8QvViZmoBzis&_nc_ohc=0sXW6iHpK6IQ7kNvwEq55D-&_nc_oc=AdoBj_zv0diy7NN0e-TCYuyMkP34q-SUpv258rNKwQqemzkyZ9CYDSVQUg8Lsy9PF7U&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=qYNcVayeCICPhiiihrP7nQ&_nc_ss=7b2a8&oh=00_AQLYxL-9Sa2wldxjhLGuG-1XG2tuM78XleAbyiAlhE19rQ&oe=6AA6F464"
+                alt="Tradition">
+
+            <figcaption class="still-caption">
+
+                <strong>
+                    Tradition
+                </strong>
+
+                <span>
+                    EVENT
+                </span>
+
+            </figcaption>
+
+        </figure>
+
+        <figure class="still wide">
+
+            <img
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/774317243_1651551726979778_658877352654936069_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGJflJRqPsozddGnHN6oJUzS6wUI3TKY3RLrBQjdMpjdInS54OQROcaIMAMqNspoHYqjJU4j21RMkadk0CdAOgs&_nc_ohc=GOwUKMZ-s6EQ7kNvwHaQQR6&_nc_oc=AdrX6WV4BVWaOHtjzukmKj0MAXJaiDSZyi1RHtUv893J_OUcoYM4Lsq8UObDoGIfuu8&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=DCHCM6KcJf7y8fDXgi0FGw&_nc_ss=7b2a8&oh=00_AQJ2Clw2tC0qjg0eW0P9QH6kBgNjZ3XDR1pWpVuR9hOPTQ&oe=6AA6E4E2"
+                alt="Afterglow">
+
+            <figcaption class="still-caption">
+
+                <strong>
+                    Birth day
+                </strong>
+
+                <span>
+                    PORTRAIT
+                </span>
+
+            </figcaption>
+
+        </figure>
+
+    </div>
+
+</section>
+
+<!-- =====================================================
+     STUDIO
+===================================================== -->
+
+<section
+    class="section studio"
+    id="studio">
+
+    <div class="studio-grid">
+
+        <div class="reveal">
+
+            <div class="section-kicker">
+
+                <i></i>
+
+                THE STUDIO
+
+            </div>
+
+            <h2>
+
+                Every frame is built
+
+                <span>
+                    before
+                </span>
+
+                the shutter ever opens.
+
+            </h2>
+
+            <p class="studio-text">
+
+                We treat your day like a film — planned,
+                lit, and crafted.
+
+                From a single portrait to a three-day
+                wedding, ADI Pictures directs light,
+                mood and story.
+
+                Based at Adama Asebe Teferi,
+                working across Ethiopia and beyond.
+
+            </p>
+
+            <div class="stats">
+
+                <div class="stat">
+
+                    <strong
+                        data-count="78">
+                        0
+                    </strong>
+
+                    <span>
+                        K+
+                    </span>
+
+                    <small class="stat-label">
+                        COMMUNITY
+                    </small>
+
+                </div>
+
+                <div class="stat">
+
+                    <strong
+                        data-count="3600">
+                        0
+                    </strong>
+
+                    <span>
+                        +
+                    </span>
+
+                    <small class="stat-label">
+                        STORIES TOLD
+                    </small>
+
+                </div>
+
+                <div class="stat">
+
+                    <strong
+                        data-count="10">
+                        0
+                    </strong>
+
+                    <span>
+                        +
+                    </span>
+
+                    <small class="stat-label">
+                        YEARS BEHIND THE LENS
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="studio-photo reveal">
+
+            <img
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/774269183_1651550700313214_7569347616074828766_n.jpg?stp=dst-jpg_tt6&cstp=mx1365x2048&ctp=s1365x2048&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeF_p7nr-PoeRH0KrxbVzA42FYlQcReAQeQViVBxF4BB5OB06a4Xp9WrI8PkED4XZbuK12j3Fhif_7C9br-8JV8p&_nc_ohc=joOTgMU07NwQ7kNvwHl5trV&_nc_oc=AdrcB171FK0dGj_IFrK2rcEp626LMgD-cw2juaE7PnS0haLVIl0Bcj9Y90bBGeJQmxY&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=0nkg0ZMHyDWiT1ZHitek1g&_nc_ss=7b2a8&oh=00_AQL33SYUB2-2O24BZVyY4PUz_efeN58HYyX9w7qDHW7TjQ&oe=6AA6F952"
+                
+                alt="ADI Pictures">
+
+            <div class="photo-label">
+                ADI / 2026
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =====================================================
+     EDIT BAY
+===================================================== -->
+
+<section class="section">
+
+    <div class="section-header reveal">
+
+        <div>
+
+            <div class="section-kicker">
+
+                <i></i>
+
+                FROM THE EDIT BAY
+
+            </div>
+
+            <h2>
+                CULTURAL CELEBRATIONS 
+            </h2>
+
+            <p class="section-description">
+
+             Capturing the vibrant traditions and celebrations of -our culture
+
+            </p>
+
+        </div>
+
+        <div class="slider-buttons">
+
+            <button
+                class="slider-button"
+                id="editPrev">
+                ‹
+            </button>
+
+            <button
+                class="slider-button"
+                id="editNext">
+                ›
+            </button>
+
+        </div>
+
+    </div>
+
+    <div
+        class="horizontal-slider"
+        id="editSlider">
+
+        <div class="edit-card">
+
+            <img
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/494798636_1227282289406726_5243445446622112524_n.jpg?stp=dst-jpg_tt6&cstp=mx1365x2048&ctp=s1365x2048&_nc_cat=100&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeG4nQkvIRhk5c1ije3QcVek4ddg9QYQ4hXh12D1BhDiFRuWByZjbW08LVTNQ3RNI8tIHbnAKvHMfHvOz76MVF_o&_nc_ohc=5BTgwPop3rYQ7kNvwHsy-sZ&_nc_oc=Adqoij5Th2C4yPJTDnkTgC2HH0vRjvMifVLoQ4KXF2To42k2-UWaKpTULFOWXBQ2WQw&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=34iDYfCpkvhSyZncluEnpQ&_nc_ss=7b2a8&oh=00_AQKI7RTmQ5ro7IgNujNhXIbQ3nq__SnUtjyGrau8RuG0GQ&oe=6AA6F108"
+                alt="The Veil">
+
+            <span class="edit-number">
+                REEL · 01
+            </span>
+
+            <b class="edit-title">
+                ASHENDA
+            </b>
+
+        </div>
+
+        <div class="edit-card">
+
+            <img
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/488003113_1199240255544263_8579744450504193295_n.jpg?stp=dst-jpg_tt6&cstp=mx951x960&ctp=s951x960&_nc_cat=102&ccb=1-7&_nc_sid=a5f93a&_nc_eui2=AeEP3B4SllBicWcTxEUTUOaEtoWYtg4o3RO2hZi2DijdE8c3N_aUCt1KaFc22McSYa65kCcR6SpitF6txCupMfag&_nc_ohc=rp9_iyh9l8oQ7kNvwF7M0HA&_nc_oc=Adr9IphMbNPLvc3Kjxfd_vyUOtW52p7IcLul_qVm1baMYot7t0kTnC43Z46kbNA4470&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=xCwVeecg2qp0PZSXZCTmAw&_nc_ss=7b2a8&oh=00_AQIX2hKbL6bmIG-fHjlbGe1Cni7-ZvFV58XjbX-6i3tKGA&oe=6AA6D8AB"
+                alt="Habesha">
+
+            <span class="edit-number">
+                REEL · 02
+            </span>
+
+            <b class="edit-title">
+               MESEKERM
+            </b>
+
+        </div>
+
+        <div class="edit-card">
+
+            <img
+                src="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/490736545_1209669661167989_5882838303205180981_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=107&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGzT-7xLFhrrYRItOYsfkuZa720s9ylGXFrvbSz3KUZcRY3f1rDlon8IMF86DXX8uxoQg9D0zwQvYDnXEHFmcwi&_nc_ohc=Z9yJEeFWtCEQ7kNvwG2Y_w9&_nc_oc=AdraAPNVHYoTzHJBUvjvgM1TZRn9PPK_TegXmTdxFOSHUFPdCVqEWa6pcuglP3zd3Cs&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=BlRpjK76S4CbhBwoCJbBag&_nc_ss=7b2a8&oh=00_AQIJEg7C78melyrcFmVXFmqhL5SCsR4a-FF2ZqEGdbr7KQ&oe=6AA711B8"
+                alt="The Bride">
+
+            <span class="edit-number">
+                REEL · 03
+            </span>
+
+            <b class="edit-title">
+                GENA
+            </b>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =====================================================
+     CONTACT
+===================================================== -->
+
+<section
+    class="section contact"
+    id="contact">
+
+    <div class="contact-box reveal">
+
+        <div class="section-kicker">
+
+            <i></i>
+
+            LET'S MAKE IT MOVING
+
+        </div>
+
+        <h2>
+
+            Your story deserves
+
+            <span>
+                the cinema treatment.
+            </span>
+
+        </h2>
+
+        <p class="contact-intro">
+
+            Tell us your date, location and what
+            you're planning.
+
+            We'll get back to you with availability
+            and a tailored package.
+
+        </p>
+
+        <form id="contactForm">
+
+            <div class="form-row">
+
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Your name"
+                    required>
+
+                <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Phone / WhatsApp"
+                    required>
+
+            </div>
+
+            <div class="form-row">
+
+                <select name="service">
+
+                    <option>
+                        Wedding Film
+                    </option>
+
+                    <option>
+                        Event Film
+                    </option>
+
+                    <option>
+                        Portrait Session
+                    </option>
+
+                    <option>
+                        Photography + Film
+                    </option>
+
+                </select>
+
+                <input
+                    type="date"
+                    name="date">
+
+            </div>
+
+            <textarea
+                name="message"
+                rows="5"
+                placeholder="Tell us about your event...">
+            </textarea>
+
+            <button
+                class="primary-btn form-button"
+                type="submit">
+
+                SEND ENQUIRY ↗
+
+            </button>
+
+            <small
+                class="form-message"
+                id="formMessage">
+            </small>
+
+        </form>
+
+    </div>
+
+</section>
+
+</main>
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+<footer>
+
+    <div>
+
+        <div class="footer-logo">
+
+            ADI<span>PICTURES</span>
+
+        </div>
+
+        <div class="footer-category">
+
+            WEDDING · EVENT · PORTRAIT
+
+        </div>
+
+    </div>
+
+    <div class="footer-links">
+
+        <a href="#films">
+            Films
+        </a>
+
+        <a href="#stills">
+            Stills
+        </a>
+
+        <a href="#studio">
+            Studio
+        </a>
+
+        <a href="#contact">
+            Contact
+        </a>
+
+    </div>
+
+    <small>
+        © 2026 ADI Pictures
+        
+    </small>
+
+</footer>
+
+<!-- =====================================================
+     WHATSAPP
+===================================================== -->
+
+<a
+    class="whatsapp"
+    href="https://web.facebook.com/people/Adi-pictures/100063748989002/"
+    target="_blank"
+    aria-label="facebook">
+
+    ◉
+
+</a>
+
+<!-- =====================================================
+     BACK TO TOP
+===================================================== -->
+
+<button
+    class="back-top"
+    id="backTop">
+
+    ↑
+
+</button>
+
+<!-- =====================================================
+     REEL MODAL
+===================================================== -->
+<div
+    class="modal"
+    id="modal">
+
+    <div
+        class="modal-background"
+        id="modalBackground">
+    </div>
+
+    <div class="modal-box">
+
+        <button
+            class="modal-close"
+            id="modalClose">
+
+            ×
+
+        </button>
+
+        <img
+            class="modal-image"
+            id="modalImage"
+            src=""
+            alt="">
+
+        <div class="modal-info">
+
+            <span
+                class="modal-type"
+                id="modalType">
+            </span>
+
+            <h3
+                class="modal-title"
+                id="modalTitle">
+            </h3>
+
+            <p class="modal-description">
+
+                Cinematic wedding and event
+                film by ADI Pictures.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
 <script>
-  const tg = window.Telegram?.WebApp;
-  let points = 0;
 
-  if (tg) {
-    tg.ready();
-    tg.expand();
-    if (tg.initDataUnsafe?.user) {
-      document.getElementById('userName').innerText = tg.initDataUnsafe.user.first_name || 'Operator';
-      document.getElementById('userInitial').innerText = (tg.initDataUnsafe.user.first_name || 'U')[0];
-      document.getElementById('stat-userid').innerText = tg.initDataUnsafe.user.id || '—';
+/* =========================================================
+   LOADER
+========================================================= */
+
+window.addEventListener("load",function(){
+
+    setTimeout(function(){
+
+        document
+            .getElementById("loader")
+            .classList
+            .add("hide");
+
+    },700);
+
+});
+
+
+/* =========================================================
+   SCROLL PROGRESS
+========================================================= */
+
+window.addEventListener("scroll",function(){
+
+    const scrollTop =
+        window.scrollY;
+
+    const documentHeight =
+        document.documentElement.scrollHeight
+        - window.innerHeight;
+
+    const percentage =
+        (scrollTop / documentHeight) * 100;
+
+    document
+        .getElementById("progress")
+        .style.width =
+        percentage + "%";
+
+});
+
+
+/* =========================================================
+   HEADER SCROLL
+========================================================= */
+
+window.addEventListener("scroll",function(){
+
+    const header =
+        document.getElementById("header");
+
+    if(window.scrollY > 60){
+
+        header.classList.add("scrolled");
+
+    }else{
+
+        header.classList.remove("scrolled");
+
     }
-  }
 
-  // Adsgram Integration Setup
-  // 👉 <u>ADSGRAM BLOCK ID</u> ያስገቡ (ከ Adsgram Dashboard ያገኙትን ID ይተኩ)
-  const ADSGRAM_BLOCK_ID = 'int-47297'; 
+});
 
-  function showRewardAd() {
-    const statusEl = document.getElementById('adStatus');
-    statusEl.innerText = "Loading ad...";
 
-    if (typeof Adsgram === 'undefined') {
-      statusEl.innerText = "Adsgram SDK not loaded properly.";
-      return;
-    }
+/* =========================================================
+   MOBILE MENU
+========================================================= */
 
-    const AdController = Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+const menuBtn =
+    document.getElementById("menuBtn");
 
-    AdController.show().then((result) => {
-      // ተጫዋቹ ማስታወቂያውን ጨርሶ ሲያይ
-      points += 50;
-      document.getElementById('userPoints').innerText = points;
-      statusEl.innerText = "Success! You earned +50 points.";
-    }).catch((result) => {
-      // ማስታወቂያው ሳይጨረስ ሲዘጋ ወይም ስህተት ሲፈጠር
-      statusEl.innerText = "Ad skipped or failed to load.";
+const mobileMenu =
+    document.getElementById("mobileMenu");
+
+menuBtn.addEventListener("click",function(){
+
+    mobileMenu.classList.toggle("open");
+
+});
+
+document
+    .querySelectorAll(".mobile-menu a")
+    .forEach(function(link){
+
+        link.addEventListener("click",function(){
+
+            mobileMenu.classList.remove("open");
+
+        });
+
     });
-  }
+
+
+/* =========================================================
+   THEME
+========================================================= */
+
+const themeBtn =
+    document.getElementById("themeBtn");
+
+themeBtn.addEventListener("click",function(){
+
+    document.body.classList.toggle("light");
+
+    if(
+        document.body.classList.contains("light")
+    ){
+
+        themeBtn.textContent = "☾";
+
+    }else{
+
+        themeBtn.textContent = "☼";
+
+    }
+
+});
+
+
+/* =========================================================
+   HERO SLIDER
+========================================================= */
+
+const heroSlides =
+    document.querySelectorAll(".hero-slide");
+
+const heroDots =
+    document.querySelectorAll(".hero-dot");
+
+const heroTitle =
+    document.getElementById("heroTitle");
+
+const aperture =
+    document.getElementById("aperture");
+
+const titles = [
+
+    "The Wow",
+    "The Blessing",
+    "The Golden Hour"
+
+];
+
+const apertures = [
+
+    "T1.8",
+    "T2.4",
+    "T2.0"
+
+];
+
+let currentSlide = 0;
+
+let heroTimer;
+
+
+function showHero(index){
+
+    currentSlide =
+        (index + heroSlides.length)
+        % heroSlides.length;
+
+    heroSlides.forEach(
+        function(slide,i){
+
+            slide.classList.toggle(
+                "active",
+                i === currentSlide
+            );
+
+        }
+    );
+
+    heroDots.forEach(
+        function(dot,i){
+
+            dot.classList.toggle(
+                "active",
+                i === currentSlide
+            );
+
+        }
+    );
+
+    heroTitle.textContent =
+        titles[currentSlide];
+
+    aperture.textContent =
+        apertures[currentSlide];
+
+}
+
+
+function restartHero(){
+
+    clearInterval(heroTimer);
+
+    heroTimer =
+        setInterval(function(){
+
+            showHero(
+                currentSlide + 1
+            );
+
+        },5500);
+
+}
+
+
+heroDots.forEach(
+    function(dot,index){
+
+        dot.addEventListener(
+            "click",
+            function(){
+
+                showHero(index);
+
+                restartHero();
+
+            }
+        );
+
+    }
+);
+
+restartHero();
+
+
+/* =========================================================
+   MUTE BUTTON
+========================================================= */
+
+const muteBtn =
+    document.getElementById("muteBtn");
+
+muteBtn.addEventListener("click",function(){
+
+    if(
+        muteBtn.textContent === "🔇"
+    ){
+
+        muteBtn.textContent = "🔊";
+
+    }else{
+
+        muteBtn.textContent = "🔇";
+
+    }
+
+});
+
+
+/* =========================================================
+   WATCH FILMS
+========================================================= */
+
+document
+    .getElementById("watchFilms")
+    .addEventListener("click",function(){
+
+        document
+            .getElementById("films")
+            .scrollIntoView({
+                behavior:"smooth"
+            });
+
+    });
+
+
+/* =========================================================
+   SLIDER FUNCTION
+========================================================= */
+
+function moveSlider(
+    selector,
+    amount
+){
+
+    const slider =
+        document.querySelector(selector);
+
+    slider.scrollBy({
+
+        left:amount,
+
+        behavior:"smooth"
+
+    });
+
+}
+
+
+/* REELS */
+
+document
+    .getElementById("reelNext")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#reelSlider",
+            440
+        );
+
+    });
+
+document
+    .getElementById("reelPrev")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#reelSlider",
+            -440
+        );
+
+    });
+
+
+/* STILLS */
+
+document
+    .getElementById("stillNext")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#stillSlider",
+            600
+        );
+
+    });
+
+document
+    .getElementById("stillPrev")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#stillSlider",
+            -600
+        );
+
+    });
+
+
+/* EDIT */
+
+document
+    .getElementById("editNext")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#editSlider",
+            360
+        );
+
+    });
+
+document
+    .getElementById("editPrev")
+    .addEventListener("click",function(){
+
+        moveSlider(
+            "#editSlider",
+            -360
+        );
+
+    });
+
+
+/* =========================================================
+   REEL MODAL
+========================================================= */
+
+const modal =
+    document.getElementById("modal");
+
+const modalImage =
+    document.getElementById("modalImage");
+
+const modalTitle =
+    document.getElementById("modalTitle");
+
+const modalType =
+    document.getElementById("modalType");
+
+const modalClose =
+    document.getElementById("modalClose");
+
+const modalBackground =
+    document.getElementById("modalBackground");
+
+
+document
+    .querySelectorAll(".reel")
+    .forEach(function(reel){
+
+        reel.addEventListener(
+            "click",
+            function(){
+
+                modalImage.src =
+                    reel.dataset.image;
+
+                modalTitle.textContent =
+                    reel.dataset.title;
+
+                modalType.textContent =
+                    reel.dataset.type;
+
+                modal.classList.add("open");
+
+                document.body.style.overflow =
+                    "hidden";
+
+            }
+        );
+
+    });
+
+
+function closeModal(){
+
+    modal.classList.remove("open");
+
+    document.body.style.overflow =
+        "";
+
+}
+
+
+modalClose.addEventListener(
+    "click",
+    closeModal
+);
+
+modalBackground.addEventListener(
+    "click",
+    closeModal
+);
+
+
+document.addEventListener(
+    "keydown",
+    function(event){
+
+        if(event.key === "Escape"){
+
+            closeModal();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   SCROLL REVEAL
+========================================================= */
+
+const revealObserver =
+    new IntersectionObserver(
+        function(entries){
+
+            entries.forEach(
+                function(entry){
+
+                    if(
+                        entry.isIntersecting
+                    ){
+
+                        entry.target
+                            .classList
+                            .add("visible");
+
+                    }
+
+                }
+            );
+
+        },
+        {
+            threshold:.15
+        }
+    );
+
+
+document
+    .querySelectorAll(".reveal")
+    .forEach(function(element){
+
+        revealObserver.observe(element);
+
+    });
+
+
+/* =========================================================
+   NUMBER COUNTERS
+========================================================= */
+
+const counterObserver =
+    new IntersectionObserver(
+        function(entries){
+
+            entries.forEach(
+                function(entry){
+
+                    if(
+                        !entry.isIntersecting
+                    ){
+
+                        return;
+
+                    }
+
+                    const element =
+                        entry.target;
+
+                    if(
+                        element.dataset.done
+                    ){
+
+                        return;
+
+                    }
+
+                    element.dataset.done =
+                        "true";
+
+                    const target =
+                        Number(
+                            element.dataset.count
+                        );
+
+                    let start =
+                        0;
+
+                    const duration =
+                        1500;
+
+                    const startTime =
+                        performance.now();
+
+
+                    function animate(
+                        currentTime
+                    ){
+
+                        const progress =
+                            Math.min(
+                                (currentTime - startTime)
+                                / duration,
+                                1
+                            );
+
+                        const eased =
+                            1 -
+                            Math.pow(
+                                1-progress,
+                                3
+                            );
+
+                        const value =
+                            Math.floor(
+                                target * eased
+                            );
+
+                        element.textContent =
+                            value.toLocaleString();
+
+                        if(
+                            progress < 1
+                        ){
+
+                            requestAnimationFrame(
+                                animate
+                            );
+
+                        }
+
+                    }
+
+                    requestAnimationFrame(
+                        animate
+                    );
+
+                }
+            );
+
+        },
+        {
+            threshold:.5
+        }
+    );
+
+
+document
+    .querySelectorAll("[data-count]")
+    .forEach(function(counter){
+
+        counterObserver.observe(counter);
+
+    });
+
+
+/* =========================================================
+   CONTACT FORM
+========================================================= */
+
+const contactForm =
+    document.getElementById("contactForm");
+
+const formMessage =
+    document.getElementById("formMessage");
+
+
+contactForm.addEventListener(
+    "submit",
+    function(event){
+
+        event.preventDefault();
+
+        const formData =
+            new FormData(contactForm);
+
+        const name =
+            formData.get("name");
+
+        const phone =
+            formData.get("phone");
+
+        const service =
+            formData.get("service");
+
+        const date =
+            formData.get("date");
+
+        const message =
+            formData.get("message");
+
+
+        const whatsappMessage =
+
+`Hello AD Pictures!
+
+Name: ${name}
+
+Phone: ${phone}
+
+Service: ${service}
+
+Date: ${date || "Not specified"}
+
+Message:
+${message || "No additional message."}`;
+
+
+        const whatsappURL =
+            "https://wa.me/251900000000?text="
+            +
+            encodeURIComponent(
+                whatsappMessage
+            );
+
+
+        formMessage.textContent =
+            "Opening WhatsApp...";
+
+
+        window.open(
+            whatsappURL,
+            "_blank"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   BACK TO TOP
+========================================================= */
+
+const backTop =
+    document.getElementById("backTop");
+
+
+window.addEventListener(
+    "scroll",
+    function(){
+
+        if(window.scrollY > 600){
+
+            backTop.classList.add("show");
+
+        }else{
+
+            backTop.classList.remove("show");
+
+        }
+
+    }
+);
+
+
+backTop.addEventListener(
+    "click",
+    function(){
+
+        window.scrollTo({
+
+            top:0,
+
+            behavior:"smooth"
+
+        });
+
+    }
+);
+
+
+/* =========================================================
+   MAGNETIC BUTTON EFFECT
+========================================================= */
+
+if(
+    window.matchMedia(
+        "(pointer:fine)"
+    ).matches
+){
+
+    document
+        .querySelectorAll(
+            ".primary-btn,.secondary-btn,.book-btn"
+        )
+        .forEach(function(button){
+
+            button.addEventListener(
+                "mousemove",
+                function(event){
+
+                    const rect =
+                        button.getBoundingClientRect();
+
+                    const x =
+                        event.clientX
+                        -
+                        rect.left
+                        -
+                        rect.width / 2;
+
+                    const y =
+                        event.clientY
+                        -
+                        rect.top
+                        -
+                        rect.height / 2;
+
+                    button.style.transform =
+                        `translate(${x*.08}px,${y*.08}px)`;
+
+                }
+            );
+
+
+            button.addEventListener(
+                "mouseleave",
+                function(){
+
+                    button.style.transform =
+                        "";
+
+                }
+            );
+
+        });
+
+}
+
+
+/* =========================================================
+   KEYBOARD SLIDER SUPPORT
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(event){
+
+        if(event.key === "ArrowRight"){
+
+            moveSlider(
+                "#reelSlider",
+                440
+            );
+
+        }
+
+        if(event.key === "ArrowLeft"){
+
+            moveSlider(
+                "#reelSlider",
+                -440
+            );
+
+        }
+
+    }
+);
+
 </script>
+
 </body>
 </html>
