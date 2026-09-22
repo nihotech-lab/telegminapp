@@ -2374,7 +2374,7 @@ body.light .stills{
 
         <figure class="still wide">
             <img
-                src="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/552170159_1351274170340870_4592488797735015639_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s590x590&_nc_cat=109&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEl5vtEeTnO04y3QpuyqB8kG0cCF25ge9kbRwIXbmB72QNsIEsMsMXkrmJw0gN4aNyErY98QoinyZbehDWWIsBW&_nc_ohc=-FCiBpQlzvkQ7kNvwE8ckNq&_nc_oc=AdoAt2C_JQmOLdfp9moFMeo6KQApspfvZ3aaDW0GBFUE5Uk7NwG7VRNjrXDZa_aPHmo&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=pvx0UjzPOcyJUA-DRLW9zA&_nc_ss=7b2a8&oh=00_AQIXWZE6BIEu2YdkmcMn9MPOgPtkG5IOgQuCgiPNUmxn6w&oe=6AA6E952"
+                src="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/552170159_1351274170340870_4592488797735015639_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=109&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEl5vtEeTnO04y3QpuyqB8kG0cCF25ge9kbRwIXbmB72QNsIEsMsMXkrmJw0gN4aNyErY98QoinyZbehDWWIsBW&_nc_ohc=NkmuYkInSZ4Q7kNvwG3WlFR&_nc_oc=Adq-OqHZeIWHoChCMA5CHkzqGbK1roFARfLn7IYv_tt7o6wKze5Qq3mWzH_OOMeozgM&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=6cauHyEjb0pA_waWzCWlKg&_nc_ss=7b2a8&oh=00_AQJMat5W1_9YGhhzPc1xJdnBCF3QOOk7j4kbFNXVu0ArhA&oe=6AB80CD2"
                 alt="Golden Hour">
             <figcaption class="still-caption">
 
@@ -2393,7 +2393,7 @@ body.light .stills{
         <figure class="still">
 
             <img
-                src="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/659037910_1525866256214993_5696717505039017386_n.jpg?stp=dst-jpg_tt6&cstp=mx1365x2048&ctp=s1365x2048&_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEDsQEN-UljKumr0z3DR-pfrY53wTmr8QqtjnfBOavxCgzubstDLYn0k-wWjVr4_R0YhL4Z8S1oygpoFmFVEXbm&_nc_ohc=SdM59-NnlFQQ7kNvwGTTheX&_nc_oc=AdqucfpwEvoJyfT5V-uP2Qwn8w_VOE0AmUH3Xv5oH-IbLZuakQNNWQdDhTpVumu93LI&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=dwZY2RIUoN6rQBkulfdldg&_nc_ss=7b2a8&oh=00_AQJ9TFBXLC6dFHnyWDPM5XlRR7M07sekoM_A1uw9Br1-mA&oe=6AA6F067"
+                src="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/659037910_1525866256214993_5696717505039017386_n.jpg?stp=dst-jpg_tt6&cstp=mx1365x2048&ctp=s1365x2048&_nc_cat=111&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEDsQEN-UljKumr0z3DR-pfrY53wTmr8QqtjnfBOavxCgzubstDLYn0k-wWjVr4_R0YhL4Z8S1oygpoFmFVEXbm&_nc_ohc=izuaksvM9FkQ7kNvwHT5ozz&_nc_oc=AdpAxs--dnrRfR17u8XulglcvTnfsSgQ1hxwCA2EnowRvnR1zE5hbhq3z9AAUhMps28&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=YXFThxM3mVwERPKZuNcAIQ&_nc_ss=7b2a8&oh=00_AQL2iOfn7rzfKoGsZi7VDEflzqpdFyPQyngr3vopLD7enw&oe=6AB813E7"
                 alt="The Bride">
 
             <figcaption class="still-caption">
@@ -2434,7 +2434,7 @@ body.light .stills{
         <figure class="still wide">
 
             <img
-                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/774317243_1651551726979778_658877352654936069_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGJflJRqPsozddGnHN6oJUzS6wUI3TKY3RLrBQjdMpjdInS54OQROcaIMAMqNspoHYqjJU4j21RMkadk0CdAOgs&_nc_ohc=GOwUKMZ-s6EQ7kNvwHaQQR6&_nc_oc=AdrX6WV4BVWaOHtjzukmKj0MAXJaiDSZyi1RHtUv893J_OUcoYM4Lsq8UObDoGIfuu8&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=DCHCM6KcJf7y8fDXgi0FGw&_nc_ss=7b2a8&oh=00_AQJ2Clw2tC0qjg0eW0P9QH6kBgNjZ3XDR1pWpVuR9hOPTQ&oe=6AA6E4E2"
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/774317243_1651551726979778_658877352654936069_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=102&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGJflJRqPsozddGnHN6oJUzS6wUI3TKY3RLrBQjdMpjdInS54OQROcaIMAMqNspoHYqjJU4j21RMkadk0CdAOgs&_nc_ohc=Qex8rEeNZ2YQ7kNvwFgWypX&_nc_oc=Adr2DjCREN5EkEPQ1-3Uvatis_Wk0VNDYwZrDm5ABI1X5uoX2rT59zCuzgs3AeexqrY&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=_N2cJrhQRUNfe6O1_8zB5w&_nc_ss=7b2a8&oh=00_AQIqYestRGTFf8lb2X379tdY1Mu6BkEAp2YwecJvy-fSkA&oe=6AB80862"
                 alt="Afterglow">
 
             <figcaption class="still-caption">
@@ -2561,7 +2561,7 @@ body.light .stills{
         <div class="studio-photo reveal">
 
             <img
-                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/774269183_1651550700313214_7569347616074828766_n.jpg?stp=dst-jpg_tt6&cstp=mx1365x2048&ctp=s1365x2048&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeF_p7nr-PoeRH0KrxbVzA42FYlQcReAQeQViVBxF4BB5OB06a4Xp9WrI8PkED4XZbuK12j3Fhif_7C9br-8JV8p&_nc_ohc=joOTgMU07NwQ7kNvwHl5trV&_nc_oc=AdrcB171FK0dGj_IFrK2rcEp626LMgD-cw2juaE7PnS0haLVIl0Bcj9Y90bBGeJQmxY&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=0nkg0ZMHyDWiT1ZHitek1g&_nc_ss=7b2a8&oh=00_AQL33SYUB2-2O24BZVyY4PUz_efeN58HYyX9w7qDHW7TjQ&oe=6AA6F952"
+                src="https://web.facebook.com/photo/?fbid=1651550696979881&set=pcb.1651551760313108"
                 
                 alt="ADI Pictures">
 
