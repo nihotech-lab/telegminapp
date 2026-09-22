@@ -2414,7 +2414,7 @@ body.light .stills{
 
             <img
             
-                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/494285647_1225309706270651_5049265173277190970_n.jpg?stp=dst-jpg_tt6&cstp=mx960x640&ctp=s960x640&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHmDDG7ISytfXg3tBLDtU3E89kGwB_tJHDz2QbAH-0kcB2Vcy0I8ftbop_cihp7z6LrffA8BeRI8QvViZmoBzis&_nc_ohc=0sXW6iHpK6IQ7kNvwEq55D-&_nc_oc=AdoBj_zv0diy7NN0e-TCYuyMkP34q-SUpv258rNKwQqemzkyZ9CYDSVQUg8Lsy9PF7U&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=qYNcVayeCICPhiiihrP7nQ&_nc_ss=7b2a8&oh=00_AQLYxL-9Sa2wldxjhLGuG-1XG2tuM78XleAbyiAlhE19rQ&oe=6AA6F464"
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/494860357_1227282149406740_3813342362091026492_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=108&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEuV1kyHA0c0BYatA07rgXGQN1oqFKM0klA3WioUozSSfoRzMAFgP-MrPhFQ90ulhqWhzbBDvAEJM8jkWNcXud7&_nc_ohc=Gz-ruaJTXbgQ7kNvwGbsGpu&_nc_oc=Ado4i5n0e9QkAXqPoPZkCIqzy-dy_NQh_Ona-GSgIv5JxEa6hO8Jl0tdJNl-oFqHPaU&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=p2h_y7XLxLy777WQGxDpGw&_nc_ss=7b2a8&oh=00_AQIcL3CZgrKelCT99bqYTMVX4dVmc0esvxJccdHbrd7X-g&oe=6AB7F760"
                 alt="Tradition">
 
             <figcaption class="still-caption">
@@ -2630,7 +2630,7 @@ body.light .stills{
         <div class="edit-card">
 
             <img
-                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/494798636_1227282289406726_5243445446622112524_n.jpg?stp=dst-jpg_tt6&cstp=mx1365x2048&ctp=s1365x2048&_nc_cat=100&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeG4nQkvIRhk5c1ije3QcVek4ddg9QYQ4hXh12D1BhDiFRuWByZjbW08LVTNQ3RNI8tIHbnAKvHMfHvOz76MVF_o&_nc_ohc=5BTgwPop3rYQ7kNvwHsy-sZ&_nc_oc=Adqoij5Th2C4yPJTDnkTgC2HH0vRjvMifVLoQ4KXF2To42k2-UWaKpTULFOWXBQ2WQw&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=34iDYfCpkvhSyZncluEnpQ&_nc_ss=7b2a8&oh=00_AQKI7RTmQ5ro7IgNujNhXIbQ3nq__SnUtjyGrau8RuG0GQ&oe=6AA6F108"
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/494860357_1227282149406740_3813342362091026492_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=108&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEuV1kyHA0c0BYatA07rgXGQN1oqFKM0klA3WioUozSSfoRzMAFgP-MrPhFQ90ulhqWhzbBDvAEJM8jkWNcXud7&_nc_ohc=Gz-ruaJTXbgQ7kNvwGbsGpu&_nc_oc=Ado4i5n0e9QkAXqPoPZkCIqzy-dy_NQh_Ona-GSgIv5JxEa6hO8Jl0tdJNl-oFqHPaU&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=p2h_y7XLxLy777WQGxDpGw&_nc_ss=7b2a8&oh=00_AQIcL3CZgrKelCT99bqYTMVX4dVmc0esvxJccdHbrd7X-g&oe=6AB7F760"
                 alt="The Veil">
 
             <span class="edit-number">
@@ -2646,7 +2646,7 @@ body.light .stills{
         <div class="edit-card">
 
             <img
-                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/488003113_1199240255544263_8579744450504193295_n.jpg?stp=dst-jpg_tt6&cstp=mx951x960&ctp=s951x960&_nc_cat=102&ccb=1-7&_nc_sid=a5f93a&_nc_eui2=AeEP3B4SllBicWcTxEUTUOaEtoWYtg4o3RO2hZi2DijdE8c3N_aUCt1KaFc22McSYa65kCcR6SpitF6txCupMfag&_nc_ohc=rp9_iyh9l8oQ7kNvwF7M0HA&_nc_oc=Adr9IphMbNPLvc3Kjxfd_vyUOtW52p7IcLul_qVm1baMYot7t0kTnC43Z46kbNA4470&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=xCwVeecg2qp0PZSXZCTmAw&_nc_ss=7b2a8&oh=00_AQIX2hKbL6bmIG-fHjlbGe1Cni7-ZvFV58XjbX-6i3tKGA&oe=6AA6D8AB"
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/488003113_1199240255544263_8579744450504193295_n.jpg?stp=dst-jpg_tt6&cstp=mx951x960&ctp=s951x960&_nc_cat=102&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=a5f93a&_nc_eui2=AeEP3B4SllBicWcTxEUTUOaEtoWYtg4o3RO2hZi2DijdE8c3N_aUCt1KaFc22McSYa65kCcR6SpitF6txCupMfag&_nc_ohc=cZI8it9XyWsQ7kNvwFRPoyr&_nc_oc=AdowyOldPZD83kx0MejMhiySlz5PBP4XGcsuod-WtQtdTj0ELY3Jr3wI5stj0friXYw&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=BMgkqbDgHURqRSxhUYKMsA&_nc_ss=7b2a8&oh=00_AQInbghxXn015CzenqsZG6nfuFINJfVuXdjrkVbkPXcytA&oe=6AB7FC2B"
                 alt="Habesha">
 
             <span class="edit-number">
@@ -2662,7 +2662,7 @@ body.light .stills{
         <div class="edit-card">
 
             <img
-                src="https://z-p3-scontent.fadd2-1.fna.fbcdn.net/v/t39.30808-6/490736545_1209669661167989_5882838303205180981_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=107&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGzT-7xLFhrrYRItOYsfkuZa720s9ylGXFrvbSz3KUZcRY3f1rDlon8IMF86DXX8uxoQg9D0zwQvYDnXEHFmcwi&_nc_ohc=Z9yJEeFWtCEQ7kNvwG2Y_w9&_nc_oc=AdraAPNVHYoTzHJBUvjvgM1TZRn9PPK_TegXmTdxFOSHUFPdCVqEWa6pcuglP3zd3Cs&_nc_zt=23&_nc_ht=z-p3-scontent.fadd2-1.fna&_nc_gid=BlRpjK76S4CbhBwoCJbBag&_nc_ss=7b2a8&oh=00_AQIJEg7C78melyrcFmVXFmqhL5SCsR4a-FF2ZqEGdbr7KQ&oe=6AA711B8"
+                src="https://z-p3-scontent.fadd1-1.fna.fbcdn.net/v/t39.30808-6/490760639_1209669434501345_8340480653944828404_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=104&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHCfAgUFIM6_bpFhksYjmgHCuziPXCUKW0K7OI9cJQpbZWL1l4-47zun4sPcmI1pdm0BHZ6SrVvT2axnuzz6XCy&_nc_ohc=lfJm6o6fdkEQ7kNvwG1eW3b&_nc_oc=Adr0dGJbPobGXVJQVR9hrheZ3TMBWQh2E0MIMzVbu-tQ7gUDfRVPSg4gNMgDxOGuUZ0&_nc_zt=23&_nc_ht=z-p3-scontent.fadd1-1.fna&_nc_gid=i9haFUVmV64wwpF1iprNSg&_nc_ss=7b2a8&oh=00_AQKacCfrMJn7qs647CCUyw479He_AtA9b8ZektquBm5oqA&oe=6AB7F7F6"
                 alt="The Bride">
 
             <span class="edit-number">
